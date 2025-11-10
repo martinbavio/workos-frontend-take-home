@@ -4,3 +4,5 @@ export interface PagedData<T> {
   prev: number | null;
   pages: number;
 }
+
+export type TabValue = "users" | "roles";

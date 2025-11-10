@@ -23,19 +23,20 @@ import {
   useUpdateRole,
 } from "./queries";
 import { SearchBar, TablePagination } from "../shared/components";
+import { useAppSearchParams } from "../shared/hooks";
 
 // Roles Tab
 export function RolesTab() {
-  const [roleSearchQuery, setRoleSearchQuery] = useState("");
-  const [roleCurrentPage, setRoleCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useAppSearchParams();
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [roleToEdit, setRoleToEdit] = useState<Role | null>(null);
   const [isCreateRoleDialogOpen, setIsCreateRoleDialogOpen] = useState(false);
 
+  console.log({ searchParams });
   // Fetch roles
   const { data: rolesData, isLoading: isLoadingRoles } = useRoles(
-    roleCurrentPage,
-    roleSearchQuery || undefined,
+    searchParams.page,
+    searchParams.q || undefined,
   );
 
   // Mutations
@@ -116,28 +117,28 @@ export function RolesTab() {
 
   const goToPreviousPage = () => {
     if (rolesData?.prev !== null) {
-      setRoleCurrentPage((prev) => prev - 1);
+      setSearchParams({ page: searchParams.page - 1 });
     }
   };
 
   const goToNextPage = () => {
     if (rolesData?.next !== null) {
-      setRoleCurrentPage((prev) => prev + 1);
+      setSearchParams({ page: searchParams.page + 1 });
     }
   };
 
   // Reset page when search changes
   useEffect(() => {
-    setRoleCurrentPage(1);
-  }, [roleSearchQuery]);
+    setSearchParams({ page: 1 });
+  }, [searchParams.q, setSearchParams]);
 
   const roles = rolesData?.data || [];
 
   return (
     <>
       <SearchBar
-        value={roleSearchQuery}
-        onChange={setRoleSearchQuery}
+        value={searchParams.q}
+        onChange={(value) => setSearchParams({ q: value })}
         onAdd={addRole}
         addLabel="Add role"
       />

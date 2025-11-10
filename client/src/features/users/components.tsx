@@ -25,26 +25,23 @@ import {
 } from "./queries";
 import { SearchBar, TablePagination } from "../shared/components";
 import { useRoles } from "../roles/queries";
+import { useAppSearchParams } from "../shared/hooks";
 
 // Users Tab
 export function UsersTab() {
-  const [userSearchQuery, setUserSearchQuery] = useState("");
-  const [userCurrentPage, setUserCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useAppSearchParams();
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState(false);
 
   // Fetch users
   const { data: usersData, isLoading: isLoadingUsers } = useUsers(
-    userCurrentPage,
-    userSearchQuery || undefined,
+    searchParams.page,
+    searchParams.q || undefined,
   );
 
   // Fetch all roles for user role selection (no search/pagination)
-  const { data: allRolesData, isLoading: isLoadingRoles } = useRoles(
-    1,
-    undefined,
-  );
+  const { data: allRolesData, isLoading: isLoadingRoles } = useRoles();
 
   // Mutations
   const createUserMutation = useCreateUser();
@@ -109,20 +106,20 @@ export function UsersTab() {
 
   const goToPreviousPage = () => {
     if (usersData?.prev !== null) {
-      setUserCurrentPage((prev) => prev - 1);
+      setSearchParams({ page: searchParams.page - 1 });
     }
   };
 
   const goToNextPage = () => {
     if (usersData?.next !== null) {
-      setUserCurrentPage((prev) => prev + 1);
+      setSearchParams({ page: searchParams.page + 1 });
     }
   };
 
   // Reset page when search changes
   useEffect(() => {
-    setUserCurrentPage(1);
-  }, [userSearchQuery]);
+    setSearchParams({ page: 1 });
+  }, [searchParams.q, setSearchParams]);
 
   const users = usersData?.data ?? [];
   const allRoles = allRolesData?.data ?? [];
@@ -137,8 +134,8 @@ export function UsersTab() {
   return (
     <>
       <SearchBar
-        value={userSearchQuery}
-        onChange={setUserSearchQuery}
+        value={searchParams.q}
+        onChange={(value) => setSearchParams({ q: value })}
         onAdd={addUser}
         addLabel="Add user"
       />
