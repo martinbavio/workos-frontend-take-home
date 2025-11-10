@@ -10,6 +10,7 @@ This is a React application built with Vite, TypeScript, and designed to use Rad
 - **Build Tool**: Vite 7.1.7
 - **Language**: TypeScript 5.9.3
 - **Data Fetching**: React Query (TanStack Query) - for server state management and API communication
+- **URL State Management**: nuqs - for type-safe URL search params management
 - **UI Components**:
   - Radix UI Primitives (accessible, unstyled component primitives)
   - Radix Themes (pre-styled component system for rapid UI development)
@@ -685,8 +686,158 @@ export function useUsers() {
 
 - **Server State**: Use React Query for all API data and server state
 - **Client State**: Use React's built-in hooks (`useState`, `useReducer`, `useContext`)
+- **URL State**: Use nuqs for managing state in URL search params
 - **Global Client State**: Use Context API when needed
 - Consider state management libraries only when complexity requires it
+
+## URL State Management with nuqs
+
+**nuqs is the primary tool for managing URL search parameters in a type-safe way.**
+
+### Usage Patterns
+
+#### Basic String Parameter
+
+```tsx
+import { useQueryState } from 'nuqs';
+
+function SearchComponent() {
+  const [search, setSearch] = useQueryState('search');
+
+  return (
+    <input
+      value={search || ''}
+      onChange={(e) => setSearch(e.target.value || null)}
+      placeholder="Search..."
+    />
+  );
+}
+```
+
+#### Typed Parameters with Parsers
+
+nuqs provides built-in parsers for common types:
+
+```tsx
+import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
+
+function UserList() {
+  // Number parameter (page)
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+
+  // Enum parameter (sort)
+  const [sort, setSort] = useQueryState(
+    'sort',
+    parseAsStringEnum(['name', 'date', 'status']).withDefault('name')
+  );
+
+  return (
+    <div>
+      <p>Page: {page}</p>
+      <button onClick={() => setPage(page + 1)}>Next Page</button>
+
+      <select value={sort} onChange={(e) => setSort(e.target.value)}>
+        <option value="name">Name</option>
+        <option value="date">Date</option>
+        <option value="status">Status</option>
+      </select>
+    </div>
+  );
+}
+```
+
+#### Available Parsers
+
+nuqs includes parsers for common data types:
+
+- `parseAsString` - String values
+- `parseAsInteger` - Integer numbers
+- `parseAsFloat` - Floating point numbers
+- `parseAsBoolean` - Boolean values
+- `parseAsStringEnum` - String enums
+- `parseAsArrayOf` - Arrays of values
+- `parseAsIsoDateTime` - ISO date strings
+- `parseAsTimestamp` - Unix timestamps
+
+#### Multiple Parameters
+
+```tsx
+import { useQueryStates, parseAsInteger, parseAsString } from 'nuqs';
+
+function FilteredUserList() {
+  const [params, setParams] = useQueryStates({
+    page: parseAsInteger.withDefault(1),
+    search: parseAsString,
+    roleId: parseAsString,
+  });
+
+  const updateFilters = (updates: Partial<typeof params>) => {
+    setParams(updates);
+  };
+
+  return (
+    <div>
+      <input
+        value={params.search || ''}
+        onChange={(e) => updateFilters({ search: e.target.value || null })}
+      />
+      <p>Page: {params.page}</p>
+    </div>
+  );
+}
+```
+
+#### Integration with React Query
+
+Combine nuqs with React Query for URL-synced data fetching:
+
+```tsx
+import { useQuery } from '@tanstack/react-query';
+import { useQueryStates, parseAsInteger, parseAsString } from 'nuqs';
+
+function Users() {
+  const [params] = useQueryStates({
+    page: parseAsInteger.withDefault(1),
+    search: parseAsString,
+  });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['users', params],
+    queryFn: () => fetchUsers(params),
+  });
+
+  // Data fetching is automatically triggered when URL params change
+}
+```
+
+### Best Practices
+
+1. **Use Parsers with Defaults**: Always specify default values for required parameters
+   ```tsx
+   parseAsInteger.withDefault(1)
+   ```
+
+2. **Null for Optional Params**: Set optional params to `null` to remove them from URL
+   ```tsx
+   setSearch(value || null)
+   ```
+
+3. **Type Safety**: Use typed parsers to ensure URL params match expected types
+   ```tsx
+   parseAsStringEnum(['admin', 'user', 'guest'])
+   ```
+
+4. **Combine with React Query**: Use URL params as query keys for automatic refetching
+   ```tsx
+   queryKey: ['users', params]
+   ```
+
+5. **Batch Updates**: Use `useQueryStates` when managing multiple related parameters
+   ```tsx
+   setParams({ page: 1, search: 'john' })
+   ```
+
+6. **Shareable URLs**: nuqs automatically keeps URL in sync, making all state shareable via URL
 
 ## Important Notes
 
@@ -708,6 +859,7 @@ export function useUsers() {
 
 - [React Documentation](https://react.dev)
 - [TanStack Query (React Query) Documentation](https://tanstack.com/query/latest/docs/framework/react/overview)
+- [nuqs Documentation](https://nuqs.47ng.com/)
 - [Radix Themes Documentation](https://www.radix-ui.com/themes/docs/overview/getting-started)
 - [Radix UI Primitives Documentation](https://www.radix-ui.com/primitives/docs/overview/introduction)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
