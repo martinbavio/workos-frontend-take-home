@@ -1,0 +1,134 @@
+:root {
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    color-scheme: light dark;
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #242424;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    font-weight: 500;
+    color: #646cff;
+    text-decoration: inherit;
+}
+a:hover {
+    color: #535bf2;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+}
+
+h1 {
+    font-size: 3.2em;
+    line-height: 1.1;
+}
+
+button {
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: #1a1a1a;
+    cursor: pointer;
+    transition: border-color 0.25s;
+}
+button:hover {
+    border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        color: #213547;
+        background-color: #ffffff;
+    }
+    a:hover {
+        color: #747bff;
+    }
+    button {
+        background-color: #f9f9f9;
+    }
+}
+
+/* Dropdown Menu Styles */
+.dropdown-menu-content {
+    min-width: 143px;
+    background-color: white;
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow:
+        0px 30px 56px 0px rgba(20, 20, 26, 0.12),
+        0px 3.71px 13.2px 0px rgba(20, 20, 26, 0.04),
+        0px -6.43px 24px 0px rgba(20, 20, 26, 0.02),
+        0px 4.691px 6.95px 0px rgba(20, 20, 26, 0.05),
+        0px 1.855px 2.748px 0px rgba(20, 20, 26, 0.04);
+    animation-duration: 200ms;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
+}
+
+.dropdown-menu-content[data-state="open"] {
+    animation-name: slideDownAndFade;
+}
+
+.dropdown-menu-content[data-state="closed"] {
+    animation-name: slideUpAndFade;
+}
+
+.dropdown-menu-item {
+    font-family: "Untitled Sans", sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    color: #2b333b;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    height: 32px;
+    padding: 4px 12px;
+    position: relative;
+    user-select: none;
+    outline: none;
+    cursor: pointer;
+}
+
+.dropdown-menu-item:hover,
+.dropdown-menu-item:focus {
+    background-color: #f9f9fb;
+}
+
+@keyframes slideDownAndFade {
+    from {
+        opacity: 0;
+        transform: translateY(-2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUpAndFade {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-2px);
+    }
+}
