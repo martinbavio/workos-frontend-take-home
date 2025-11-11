@@ -7,7 +7,6 @@ import {
   Text,
   Badge,
   Checkbox,
-  Spinner,
   TextArea,
 } from "@radix-ui/themes";
 import { Label } from "radix-ui";
@@ -21,11 +20,14 @@ import {
   dialogReducer,
   INITIAL_DIALOG_STATE,
 } from "./reducers";
-import { useAppSearchParams, useToast } from "../shared/hooks";
+import { useAppSearchParams } from "../shared/hooks";
 import { useMutateRoles, useRoles } from "./hooks";
 import type { ActionsMenuItem } from "../shared/types";
 import { Dialog } from "../shared/Dialog";
-import { IDS } from "../shared/constants";
+import { ICON_SIZE, IDS } from "../shared/constants";
+import { useToast } from "../shared/Toast/hooks";
+import { Spinner } from "../shared/Spinner";
+import { CircleBackslashIcon } from "@radix-ui/react-icons";
 
 // Roles Tab
 export function RolesTab() {
@@ -150,14 +152,25 @@ export function RolesTab() {
             <Table.Row>
               <Table.Cell colSpan={3}>
                 <Flex justify="center" align="center" py="6">
-                  <Spinner size="3" />
+                  <Spinner message="Loading roles..." />
                 </Flex>
               </Table.Cell>
             </Table.Row>
           ) : roles.length === 0 ? (
             <Table.Row>
               <Table.Cell colSpan={3}>
-                <Flex justify="center" align="center" py="6">
+                <Flex
+                  justify="center"
+                  align="center"
+                  py="6"
+                  direction="column"
+                  gap="2"
+                >
+                  <CircleBackslashIcon
+                    {...ICON_SIZE}
+                    color="gray"
+                    aria-hidden="true"
+                  />
                   <Text color="gray" size="2">
                     No roles found
                   </Text>
@@ -373,7 +386,7 @@ export function EditRoleDialog({
     <Dialog.Root open={!!role} onOpenChange={(open) => !open && onCancel()}>
       <Dialog.Content maxWidth="520px">
         <Dialog.Title>Edit role</Dialog.Title>
-        <Dialog.Description size="2" mb="4">
+        <Dialog.Description size="2" mb="5" mt="-2" color="gray">
           Update the role's information below.
         </Dialog.Description>
 
@@ -437,7 +450,7 @@ export function EditRoleDialog({
                 </Button>
               </Dialog.Close>
               <Button variant="solid" type="submit" disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save changes"}
+                {isSaving ? "Updating..." : "Update role"}
               </Button>
             </Flex>
           </Flex>
@@ -479,7 +492,7 @@ export function CreateRoleDialog({
     <Dialog.Root open={isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Content maxWidth="520px">
         <Dialog.Title>Add role</Dialog.Title>
-        <Dialog.Description size="2" mb="4">
+        <Dialog.Description size="2" mb="5" mt="-2" color="gray">
           Create a new role by filling in the information below.
         </Dialog.Description>
 

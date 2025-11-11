@@ -1,7 +1,7 @@
 import { Toast } from "radix-ui";
 import { useState, useCallback } from "react";
-import "./toast.css";
 import { ToastContext } from "./hooks";
+import "./styles.css";
 
 interface ToastMessage {
   id: string;

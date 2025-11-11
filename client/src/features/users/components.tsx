@@ -7,7 +7,6 @@ import {
   AlertDialog,
   Text,
   Select,
-  Spinner,
 } from "@radix-ui/themes";
 
 import type { CreateUser, UpdateUser, User } from "./types";
@@ -15,7 +14,7 @@ import type { Role } from "../roles/types";
 import { useEffect, useReducer } from "react";
 
 import { ActionsMenu, SearchBar, TablePagination } from "../shared/components";
-import { useAppSearchParams, useToast } from "../shared/hooks";
+import { useAppSearchParams } from "../shared/hooks";
 import { useMutateUsers, useUsers } from "./hooks";
 import { useRoles } from "../roles/hooks";
 import type { ActionsMenuItem } from "../shared/types";
@@ -27,7 +26,10 @@ import {
   INITIAL_DIALOG_STATE,
 } from "./reducers";
 import { Dialog } from "../shared/Dialog";
-import { IDS } from "../shared/constants";
+import { ICON_SIZE, IDS } from "../shared/constants";
+import { useToast } from "../shared/Toast/hooks";
+import { Spinner } from "../shared/Spinner";
+import { CircleBackslashIcon } from "@radix-ui/react-icons";
 
 // Users Tab
 export function UsersTab() {
@@ -163,14 +165,25 @@ export function UsersTab() {
             <Table.Row>
               <Table.Cell colSpan={4}>
                 <Flex justify="center" align="center" py="6">
-                  <Spinner size="3" />
+                  <Spinner message="Loading users..." />
                 </Flex>
               </Table.Cell>
             </Table.Row>
           ) : users.length === 0 ? (
             <Table.Row>
               <Table.Cell colSpan={4}>
-                <Flex justify="center" align="center" py="6">
+                <Flex
+                  justify="center"
+                  align="center"
+                  py="6"
+                  direction="column"
+                  gap="2"
+                >
+                  <CircleBackslashIcon
+                    {...ICON_SIZE}
+                    color="gray"
+                    aria-hidden="true"
+                  />
                   <Text color="gray" size="2">
                     No users found
                   </Text>
@@ -381,7 +394,7 @@ export function EditUserDialog({
     <Dialog.Root open={!!user} onOpenChange={(open) => !open && onCancel()}>
       <Dialog.Content maxWidth="520px">
         <Dialog.Title>Edit user</Dialog.Title>
-        <Dialog.Description size="2" mb="4">
+        <Dialog.Description size="2" mb="5" mt="-2" color="gray">
           Update the user's information below.
         </Dialog.Description>
 
@@ -484,7 +497,7 @@ export function CreateUserDialog({
     <Dialog.Root open={isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Content maxWidth="520px">
         <Dialog.Title>Add user</Dialog.Title>
-        <Dialog.Description size="2" mb="4">
+        <Dialog.Description size="2" mb="5" mt="-2" color="gray">
           Create a new user by filling in the information below.
         </Dialog.Description>
 

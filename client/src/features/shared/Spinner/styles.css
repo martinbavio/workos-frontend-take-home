@@ -1,0 +1,45 @@
+.spinner {
+    --size: 2rem;
+}
+
+.spinner span:first-child {
+    display: block;
+    width: var(--size);
+    height: calc(var(--size) / 2);
+    position: relative;
+    overflow: hidden;
+}
+
+.spinner span:first-child:before {
+    content: "";
+    width: var(--size);
+    height: var(--size);
+    position: absolute;
+    left: 0;
+    top: 0;
+    border: 3px solid #fff;
+    border-color: var(--accent-9) var(--accent-9) #fff #fff;
+    border-radius: 50%;
+    box-sizing: border-box;
+    animation: rotate 3s ease-in-out infinite;
+    transform: rotate(-200deg);
+}
+
+@keyframes rotate {
+    0% {
+        border-width: 5px;
+    }
+    25% {
+        border-width: 3px;
+    }
+    50% {
+        transform: rotate(115deg);
+        border-width: 8px;
+    }
+    75% {
+        border-width: 3px;
+    }
+    100% {
+        border-width: 5px;
+    }
+}
