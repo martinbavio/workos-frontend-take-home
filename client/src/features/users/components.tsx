@@ -145,9 +145,15 @@ export function UsersTab() {
       <Table.Root variant="surface" style={{ tableLayout: "fixed" }}>
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeaderCell width="40%">User</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell width="30%">Role</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell width="22%">Joined</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell width="40%">
+              <Text color="gray">User</Text>
+            </Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell width="30%">
+              <Text color="gray">Role</Text>
+            </Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell width="22%">
+              <Text color="gray">Joined</Text>
+            </Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell width="8%" />
           </Table.Row>
         </Table.Header>
@@ -273,8 +279,12 @@ export function UserTableRow({
           {fullName}
         </Flex>
       </Table.Cell>
-      <Table.Cell>{role?.name || "Unknown"}</Table.Cell>
-      <Table.Cell>{joinedDate}</Table.Cell>
+      <Table.Cell>
+        <Text color="gray">{role?.name ?? "Unknown"}</Text>
+      </Table.Cell>
+      <Table.Cell>
+        <Text color="gray">{joinedDate}</Text>
+      </Table.Cell>
       <Table.Cell>
         <Flex justify="end">
           <UserActionsMenu

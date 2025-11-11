@@ -135,8 +135,12 @@ export function RolesTab() {
       <Table.Root variant="surface" style={{ tableLayout: "fixed" }}>
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeaderCell width="70%">Name</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell width="22%">Created</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell width="75%">
+              <Text color="gray">Name</Text>
+            </Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell width="17%">
+              <Text color="gray">Created</Text>
+            </Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell width="8%" />
           </Table.Row>
         </Table.Header>
@@ -245,7 +249,7 @@ export function RoleTableRow({ role, onEdit, onDelete }: RoleTableRowProps) {
       <Table.Cell>
         <Flex direction="column" gap="1">
           <Flex gap="2" align="center">
-            <Text weight="medium">{role.name}</Text>
+            {role.name}
             {role.isDefault && (
               <Badge size="1" color="blue">
                 Default
@@ -259,7 +263,11 @@ export function RoleTableRow({ role, onEdit, onDelete }: RoleTableRowProps) {
           )}
         </Flex>
       </Table.Cell>
-      <Table.Cell>{createdDate}</Table.Cell>
+      <Table.Cell>
+        <Text size="2" color="gray">
+          {createdDate}
+        </Text>
+      </Table.Cell>
       <Table.Cell>
         <Flex justify="end">
           <RoleActionsMenu

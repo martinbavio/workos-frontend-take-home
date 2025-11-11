@@ -7,6 +7,7 @@ import {
   Theme,
   DropdownMenu,
   IconButton,
+  Text,
 } from "@radix-ui/themes";
 import { Label } from "radix-ui";
 
@@ -82,7 +83,7 @@ export function TablePagination({
               onClick={onPrevious}
               aria-label="Previous page"
             >
-              Previous
+              <Text weight="medium">Previous</Text>
             </Button>
             <Button
               variant="outline"
@@ -90,7 +91,7 @@ export function TablePagination({
               onClick={onNext}
               aria-label="Next page"
             >
-              Next
+              <Text weight="medium">Next</Text>
             </Button>
           </Flex>
         </Table.Cell>
