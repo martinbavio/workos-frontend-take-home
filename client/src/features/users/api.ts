@@ -37,8 +37,8 @@ export async function createUser(data: CreateUser): Promise<User> {
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error || "Failed to create user");
+    const error = await response.json();
+    throw new Error(error.message ?? "Failed to create user");
   }
   return response.json();
 }
@@ -53,8 +53,8 @@ export async function updateUser(
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error || "Failed to update user");
+    const error = await response.json();
+    throw new Error(error.message ?? "Failed to update user");
   }
   return response.json();
 }
@@ -67,7 +67,9 @@ export async function deleteUser(userId: string): Promise<User> {
     if (response.status === 404) {
       throw new Error("User not found");
     }
-    throw new Error("Failed to delete user");
+
+    const error = await response.json();
+    throw new Error(error.message ?? "Failed to delete user");
   }
   return response.json();
 }

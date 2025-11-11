@@ -7,6 +7,7 @@ import { UsersTab } from "./features/users/components";
 import { RolesTab } from "./features/roles/components";
 import { useAppSearchParams } from "./features/shared/hooks";
 import type { TabValue } from "./features/shared/types";
+import { ToastProvider } from "./features/shared/Toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,9 +22,11 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Theme accentColor="iris">
-        <Box maxWidth="850px" mx="auto" p="5">
-          <AppTabs />
-        </Box>
+        <ToastProvider>
+          <Box maxWidth="850px" mx="auto" p="5">
+            <AppTabs />
+          </Box>
+        </ToastProvider>
       </Theme>
     </QueryClientProvider>
   );

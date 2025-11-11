@@ -10,7 +10,7 @@ import {
   Spinner,
   TextArea,
 } from "@radix-ui/themes";
-import * as Label from "@radix-ui/react-label";
+import { Label } from "radix-ui";
 import type { CreateRole, Role, UpdateRole } from "./types";
 import { useEffect, useReducer } from "react";
 import { ActionsMenu, SearchBar, TablePagination } from "../shared/components";
@@ -21,7 +21,7 @@ import {
   dialogReducer,
   INITIAL_DIALOG_STATE,
 } from "./reducers";
-import { useAppSearchParams } from "../shared/hooks";
+import { useAppSearchParams, useToast } from "../shared/hooks";
 import { useMutateRoles, useRoles } from "./hooks";
 import type { ActionsMenuItem } from "../shared/types";
 import { Dialog } from "../shared/Dialog";
@@ -34,6 +34,7 @@ export function RolesTab() {
     dialogReducer,
     INITIAL_DIALOG_STATE,
   );
+  const { showToast } = useToast();
 
   const { roles, isLoading, prevPage, nextPage } = useRoles();
   const { createRoleMutation, updateRoleMutation, deleteRoleMutation } =
@@ -53,6 +54,14 @@ export function RolesTab() {
       {
         onSuccess: () => {
           dispatchDialog({ type: "CLOSE" });
+          showToast(
+            "Role updated",
+            `${payload.name} has been updated successfully`,
+            "success",
+          );
+        },
+        onError: (error) => {
+          showToast("Failed to update role", error.message, "error");
         },
       },
     );
@@ -67,9 +76,15 @@ export function RolesTab() {
 
   const confirmDeleteRole = () => {
     if (dialogState.type === "DELETE" && !dialogState.role.isDefault) {
+      const roleName = dialogState.role.name;
       deleteRoleMutation.mutate(dialogState.role.id, {
         onSuccess: () => {
           dispatchDialog({ type: "CLOSE" });
+          showToast(
+            "Role deleted",
+            `${roleName} has been deleted successfully`,
+            "success",
+          );
         },
       });
     }
@@ -83,6 +98,15 @@ export function RolesTab() {
     createRoleMutation.mutate(payload, {
       onSuccess: () => {
         dispatchDialog({ type: "CLOSE" });
+        showToast(
+          "Role created",
+          `${payload.name} has been created successfully`,
+          "success",
+        );
+      },
+      onError: (error) => {
+        console.log("ERROR IS", error);
+        showToast("Failed to create role", error.message, "error");
       },
     });
   };
@@ -108,76 +132,74 @@ export function RolesTab() {
         addLabel="Add role"
       />
 
-      {isLoading ? (
-        <Flex justify="center" align="center" py="9">
-          <Spinner size="3" />
-        </Flex>
-      ) : (
-        <>
-          <Table.Root variant="surface">
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Created</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell width="36px" />
-              </Table.Row>
-            </Table.Header>
+      <Table.Root variant="surface" style={{ tableLayout: "fixed" }}>
+        <Table.Header>
+          <Table.Row>
+            <Table.ColumnHeaderCell width="70%">Name</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell width="22%">Created</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell width="8%" />
+          </Table.Row>
+        </Table.Header>
 
-            <Table.Body>
-              {roles.length === 0 ? (
-                <Table.Row>
-                  <Table.Cell colSpan={3}>
-                    <Flex justify="center" align="center" py="6">
-                      <Text color="gray" size="2">
-                        No roles found
-                      </Text>
-                    </Flex>
-                  </Table.Cell>
-                </Table.Row>
-              ) : (
-                <>
-                  {roles.map((role) => (
-                    <RoleTableRow
-                      key={role.id}
-                      role={role}
-                      onEdit={editRole}
-                      onDelete={deleteRole}
-                    />
-                  ))}
-                  <TablePagination
-                    onPrevious={goToPreviousPage}
-                    onNext={goToNextPage}
-                    hasPrevious={prevPage !== null}
-                    hasNext={nextPage !== null}
-                    colSpan={3}
-                  />
-                </>
-              )}
-            </Table.Body>
-          </Table.Root>
-
-          <DeleteRoleDialog
-            role={dialogState.type === "DELETE" ? dialogState.role : null}
-            onConfirm={confirmDeleteRole}
-            onCancel={() => dispatchDialog({ type: "CLOSE" })}
-            isDeleting={deleteRoleMutation.isPending}
+        <Table.Body>
+          {isLoading ? (
+            <Table.Row>
+              <Table.Cell colSpan={3}>
+                <Flex justify="center" align="center" py="6">
+                  <Spinner size="3" />
+                </Flex>
+              </Table.Cell>
+            </Table.Row>
+          ) : roles.length === 0 ? (
+            <Table.Row>
+              <Table.Cell colSpan={3}>
+                <Flex justify="center" align="center" py="6">
+                  <Text color="gray" size="2">
+                    No roles found
+                  </Text>
+                </Flex>
+              </Table.Cell>
+            </Table.Row>
+          ) : (
+            roles.map((role) => (
+              <RoleTableRow
+                key={role.id}
+                role={role}
+                onEdit={editRole}
+                onDelete={deleteRole}
+              />
+            ))
+          )}
+          <TablePagination
+            onPrevious={goToPreviousPage}
+            onNext={goToNextPage}
+            hasPrevious={!isLoading && prevPage !== null}
+            hasNext={!isLoading && nextPage !== null}
+            colSpan={3}
           />
+        </Table.Body>
+      </Table.Root>
 
-          <EditRoleDialog
-            role={dialogState.type === "EDIT" ? dialogState.role : null}
-            onSave={updateRole}
-            onCancel={() => dispatchDialog({ type: "CLOSE" })}
-            isSaving={updateRoleMutation.isPending}
-          />
+      <DeleteRoleDialog
+        role={dialogState.type === "DELETE" ? dialogState.role : null}
+        onConfirm={confirmDeleteRole}
+        onCancel={() => dispatchDialog({ type: "CLOSE" })}
+        isDeleting={deleteRoleMutation.isPending}
+      />
 
-          <CreateRoleDialog
-            isOpen={dialogState.type === "CREATE"}
-            onSave={createRole}
-            onCancel={() => dispatchDialog({ type: "CLOSE" })}
-            isSaving={createRoleMutation.isPending}
-          />
-        </>
-      )}
+      <EditRoleDialog
+        role={dialogState.type === "EDIT" ? dialogState.role : null}
+        onSave={updateRole}
+        onCancel={() => dispatchDialog({ type: "CLOSE" })}
+        isSaving={updateRoleMutation.isPending}
+      />
+
+      <CreateRoleDialog
+        isOpen={dialogState.type === "CREATE"}
+        onSave={createRole}
+        onCancel={() => dispatchDialog({ type: "CLOSE" })}
+        isSaving={createRoleMutation.isPending}
+      />
     </>
   );
 }

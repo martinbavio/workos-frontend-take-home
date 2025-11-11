@@ -333,7 +333,7 @@ fetch('http://localhost:3002/roles/role-123', {
 
 ```bash
 cd client
-npm add @radix-ui/themes
+npm install @radix-ui/themes
 ```
 
 Then wrap your app with the Theme provider:
@@ -415,25 +415,18 @@ When building UI components with primitives, prefer Radix UI for:
 
 #### Common Radix UI Packages
 
-Install as needed (from `/client` directory):
+Install all-in-one (from `/client` directory):
 
 ```bash
-npm add @radix-ui/react-dialog
-npm add @radix-ui/react-dropdown-menu
-npm add @radix-ui/react-select
-npm add @radix-ui/react-tabs
-npm add @radix-ui/react-tooltip
-npm add @radix-ui/react-popover
-npm add @radix-ui/react-accordion
-npm add @radix-ui/react-checkbox
-npm add @radix-ui/react-radio-group
-npm add @radix-ui/react-switch
+npm install radix-ui
 ```
+
+Use individual components as needed.
 
 #### Example Usage Pattern
 
 ```tsx
-import * as Dialog from '@radix-ui/react-dialog';
+import { Dialog } from 'radix-ui';
 
 function MyDialog() {
   return (
@@ -476,7 +469,7 @@ function MyDialog() {
 ```tsx
 // 1. Imports
 import { useState } from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
+import { Dialog } from 'radix-ui';
 import './ComponentName.css';
 
 // 2. Types/Interfaces
@@ -526,7 +519,7 @@ export function ComponentName({ title, onClose }: ComponentProps) {
 
 ```bash
 cd client
-npm add @tanstack/react-query
+npm install @tanstack/react-query
 ```
 
 ### Setup

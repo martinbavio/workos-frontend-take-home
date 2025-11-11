@@ -1,3 +1,4 @@
 .DS_Store
+.conductor
 node_modules
 dist

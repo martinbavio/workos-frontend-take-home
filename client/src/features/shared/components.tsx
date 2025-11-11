@@ -8,7 +8,7 @@ import {
   DropdownMenu,
   IconButton,
 } from "@radix-ui/themes";
-import * as Label from "@radix-ui/react-label";
+import { Label } from "radix-ui";
 
 import {
   DotsHorizontalIcon,
@@ -114,7 +114,7 @@ export function ActionsMenu({ title, items }: ActionsMenuProps) {
       </DropdownMenu.Trigger>
       <DropdownMenu.Content align="end">
         {items.map((item) => (
-          <DropdownMenu.Item onSelect={item.action}>
+          <DropdownMenu.Item key={item.label} onSelect={item.action}>
             {item.label}
           </DropdownMenu.Item>
         ))}

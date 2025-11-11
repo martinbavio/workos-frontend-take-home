@@ -37,8 +37,8 @@ export async function createRole(data: CreateRole): Promise<Role> {
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error || "Failed to create role");
+    const error = await response.json();
+    throw new Error(error.message ?? "Failed to create role");
   }
   return response.json();
 }
@@ -53,8 +53,8 @@ export async function updateRole(
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error || "Failed to update role");
+    const error = await response.json();
+    throw new Error(error.message ?? "Failed to update role");
   }
   return response.json();
 }
@@ -64,8 +64,8 @@ export async function deleteRole(roleId: string): Promise<Role> {
     method: "DELETE",
   });
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error || "Failed to delete role");
+    const error = await response.json();
+    throw new Error(error.message ?? "Failed to delete role");
   }
   return response.json();
 }

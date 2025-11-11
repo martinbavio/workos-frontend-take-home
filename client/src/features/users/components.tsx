@@ -15,7 +15,7 @@ import type { Role } from "../roles/types";
 import { useEffect, useReducer } from "react";
 
 import { ActionsMenu, SearchBar, TablePagination } from "../shared/components";
-import { useAppSearchParams } from "../shared/hooks";
+import { useAppSearchParams, useToast } from "../shared/hooks";
 import { useMutateUsers, useUsers } from "./hooks";
 import { useRoles } from "../roles/hooks";
 import type { ActionsMenuItem } from "../shared/types";
@@ -36,6 +36,7 @@ export function UsersTab() {
     dialogReducer,
     INITIAL_DIALOG_STATE,
   );
+  const { showToast } = useToast();
 
   const { users, isLoading: isLoadingUsers, prevPage, nextPage } = useUsers();
   const { createUserMutation, updateUserMutation, deleteUserMutation } =
@@ -58,6 +59,14 @@ export function UsersTab() {
       {
         onSuccess: () => {
           dispatchDialog({ type: "CLOSE" });
+          showToast(
+            "User updated",
+            `${payload.first} ${payload.last} has been updated successfully`,
+            "success",
+          );
+        },
+        onError: (error) => {
+          showToast("Failed to update user", error.message, "error");
         },
       },
     );
@@ -72,9 +81,15 @@ export function UsersTab() {
 
   const confirmDeleteUser = () => {
     if (dialogState.type === "DELETE") {
+      const userName = `${dialogState.user.first} ${dialogState.user.last}`;
       deleteUserMutation.mutate(dialogState.user.id, {
         onSuccess: () => {
           dispatchDialog({ type: "CLOSE" });
+          showToast(
+            "User deleted",
+            `${userName} has been deleted successfully`,
+            "success",
+          );
         },
       });
     }
@@ -88,6 +103,14 @@ export function UsersTab() {
     createUserMutation.mutate(payload, {
       onSuccess: () => {
         dispatchDialog({ type: "CLOSE" });
+        showToast(
+          "User created",
+          `${payload.first} ${payload.last} has been created successfully`,
+          "success",
+        );
+      },
+      onError: (error) => {
+        showToast("Failed to create user", error.message, "error");
       },
     });
   };
@@ -119,78 +142,76 @@ export function UsersTab() {
         addLabel="Add user"
       />
 
-      {isLoading ? (
-        <Flex justify="center" align="center" py="9">
-          <Spinner size="3" />
-        </Flex>
-      ) : (
-        <>
-          <Table.Root variant="surface">
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeaderCell>User</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Role</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Joined</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell width="36px" />
-              </Table.Row>
-            </Table.Header>
+      <Table.Root variant="surface" style={{ tableLayout: "fixed" }}>
+        <Table.Header>
+          <Table.Row>
+            <Table.ColumnHeaderCell width="40%">User</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell width="30%">Role</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell width="22%">Joined</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell width="8%" />
+          </Table.Row>
+        </Table.Header>
 
-            <Table.Body>
-              {users.length === 0 ? (
-                <Table.Row>
-                  <Table.Cell colSpan={4}>
-                    <Flex justify="center" align="center" py="6">
-                      <Text color="gray" size="2">
-                        No users found
-                      </Text>
-                    </Flex>
-                  </Table.Cell>
-                </Table.Row>
-              ) : (
-                <>
-                  {users.map((user) => (
-                    <UserTableRow
-                      key={user.id}
-                      user={user}
-                      role={rolesMap.get(user.roleId)}
-                      onEdit={editUser}
-                      onDelete={deleteUser}
-                    />
-                  ))}
-                  <TablePagination
-                    onPrevious={goToPreviousPage}
-                    onNext={goToNextPage}
-                    hasPrevious={prevPage !== null}
-                    hasNext={nextPage !== null}
-                    colSpan={4}
-                  />
-                </>
-              )}
-            </Table.Body>
-          </Table.Root>
-
-          <DeleteUserDialog
-            user={dialogState.type === "DELETE" ? dialogState.user : null}
-            onConfirm={confirmDeleteUser}
-            onCancel={() => dispatchDialog({ type: "CLOSE" })}
-            isDeleting={deleteUserMutation.isPending}
+        <Table.Body>
+          {isLoading ? (
+            <Table.Row>
+              <Table.Cell colSpan={4}>
+                <Flex justify="center" align="center" py="6">
+                  <Spinner size="3" />
+                </Flex>
+              </Table.Cell>
+            </Table.Row>
+          ) : users.length === 0 ? (
+            <Table.Row>
+              <Table.Cell colSpan={4}>
+                <Flex justify="center" align="center" py="6">
+                  <Text color="gray" size="2">
+                    No users found
+                  </Text>
+                </Flex>
+              </Table.Cell>
+            </Table.Row>
+          ) : (
+            users.map((user) => (
+              <UserTableRow
+                key={user.id}
+                user={user}
+                role={rolesMap.get(user.roleId)}
+                onEdit={editUser}
+                onDelete={deleteUser}
+              />
+            ))
+          )}
+          <TablePagination
+            onPrevious={goToPreviousPage}
+            onNext={goToNextPage}
+            hasPrevious={!isLoading && prevPage !== null}
+            hasNext={!isLoading && nextPage !== null}
+            colSpan={4}
           />
+        </Table.Body>
+      </Table.Root>
 
-          <EditUserDialog
-            user={dialogState.type === "EDIT" ? dialogState.user : null}
-            onSave={updateUser}
-            onCancel={() => dispatchDialog({ type: "CLOSE" })}
-            isSaving={updateUserMutation.isPending}
-          />
+      <DeleteUserDialog
+        user={dialogState.type === "DELETE" ? dialogState.user : null}
+        onConfirm={confirmDeleteUser}
+        onCancel={() => dispatchDialog({ type: "CLOSE" })}
+        isDeleting={deleteUserMutation.isPending}
+      />
 
-          <CreateUserDialog
-            isOpen={dialogState.type === "CREATE"}
-            onSave={createUser}
-            onCancel={() => dispatchDialog({ type: "CLOSE" })}
-            isSaving={createUserMutation.isPending}
-          />
-        </>
-      )}
+      <EditUserDialog
+        user={dialogState.type === "EDIT" ? dialogState.user : null}
+        onSave={updateUser}
+        onCancel={() => dispatchDialog({ type: "CLOSE" })}
+        isSaving={updateUserMutation.isPending}
+      />
+
+      <CreateUserDialog
+        isOpen={dialogState.type === "CREATE"}
+        onSave={createUser}
+        onCancel={() => dispatchDialog({ type: "CLOSE" })}
+        isSaving={createUserMutation.isPending}
+      />
     </>
   );
 }
