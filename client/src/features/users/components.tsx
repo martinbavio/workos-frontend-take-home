@@ -4,132 +4,111 @@ import {
   Button,
   Table,
   Avatar,
-  IconButton,
   AlertDialog,
-  Dialog,
   Text,
   Select,
   Spinner,
 } from "@radix-ui/themes";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { DotsHorizontalIcon } from "@radix-ui/react-icons";
-import type { User } from "./types";
+
+import type { CreateUser, UpdateUser, User } from "./types";
 import type { Role } from "../roles/types";
-import { useEffect, useState } from "react";
-import { DROPDOWN_SIDE_OFFSET, ICON_SIZE } from "../shared/constants";
-import {
-  useCreateUser,
-  useDeleteUser,
-  useUpdateUser,
-  useUsers,
-} from "./queries";
-import { SearchBar, TablePagination } from "../shared/components";
-import { useRoles } from "../roles/queries";
+import { useEffect, useReducer } from "react";
+
+import { ActionsMenu, SearchBar, TablePagination } from "../shared/components";
 import { useAppSearchParams } from "../shared/hooks";
+import { useMutateUsers, useUsers } from "./hooks";
+import { useRoles } from "../roles/hooks";
+import type { ActionsMenuItem } from "../shared/types";
+import {
+  createUserReducer,
+  editUserReducer,
+  EMPTY_USER,
+  dialogReducer,
+  INITIAL_DIALOG_STATE,
+} from "./reducers";
+import { Dialog } from "../shared/Dialog";
+import { IDS } from "../shared/constants";
 
 // Users Tab
 export function UsersTab() {
   const [searchParams, setSearchParams] = useAppSearchParams();
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [userToEdit, setUserToEdit] = useState<User | null>(null);
-  const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState(false);
-
-  // Fetch users
-  const { data: usersData, isLoading: isLoadingUsers } = useUsers(
-    searchParams.page,
-    searchParams.q || undefined,
+  const [dialogState, dispatchDialog] = useReducer(
+    dialogReducer,
+    INITIAL_DIALOG_STATE,
   );
 
-  // Fetch all roles for user role selection (no search/pagination)
-  const { data: allRolesData, isLoading: isLoadingRoles } = useRoles();
+  const { users, isLoading: isLoadingUsers, prevPage, nextPage } = useUsers();
+  const { createUserMutation, updateUserMutation, deleteUserMutation } =
+    useMutateUsers();
 
-  // Mutations
-  const createUserMutation = useCreateUser();
-  const updateUserMutation = useUpdateUser();
-  const deleteUserMutation = useDeleteUser();
+  // Fetch all roles for user role selection (no search/pagination)
+  const { roles, isLoading: isLoadingRoles } = useRoles();
 
   // Handlers
   const editUser = (userId: string) => {
-    const user = usersData?.data.find((u) => u.id === userId);
+    const user = users.find((u) => u.id === userId);
     if (user) {
-      setUserToEdit(user);
+      dispatchDialog({ type: "OPEN_EDIT", user });
     }
   };
 
-  const updateUser = (
-    userId: string,
-    first: string,
-    last: string,
-    roleId: string,
-  ) => {
+  const updateUser = (userId: string, payload: UpdateUser) => {
     updateUserMutation.mutate(
-      { userId, data: { first, last, roleId } },
+      { userId, data: payload },
       {
         onSuccess: () => {
-          setUserToEdit(null);
+          dispatchDialog({ type: "CLOSE" });
         },
       },
     );
   };
 
   const deleteUser = (userId: string) => {
-    const user = usersData?.data.find((u) => u.id === userId);
+    const user = users.find((u) => u.id === userId);
     if (user) {
-      setUserToDelete(user);
+      dispatchDialog({ type: "OPEN_DELETE", user });
     }
   };
 
   const confirmDeleteUser = () => {
-    if (userToDelete) {
-      deleteUserMutation.mutate(userToDelete.id, {
+    if (dialogState.type === "DELETE") {
+      deleteUserMutation.mutate(dialogState.user.id, {
         onSuccess: () => {
-          setUserToDelete(null);
+          dispatchDialog({ type: "CLOSE" });
         },
       });
     }
   };
 
   const addUser = () => {
-    setIsCreateUserDialogOpen(true);
+    dispatchDialog({ type: "OPEN_CREATE" });
   };
 
-  const createUser = (first: string, last: string, roleId: string) => {
-    createUserMutation.mutate(
-      { first, last, roleId },
-      {
-        onSuccess: () => {
-          setIsCreateUserDialogOpen(false);
-        },
+  const createUser = (payload: CreateUser) => {
+    createUserMutation.mutate(payload, {
+      onSuccess: () => {
+        dispatchDialog({ type: "CLOSE" });
       },
-    );
+    });
   };
 
   const goToPreviousPage = () => {
-    if (usersData?.prev !== null) {
+    if (prevPage !== null) {
       setSearchParams({ page: searchParams.page - 1 });
     }
   };
 
   const goToNextPage = () => {
-    if (usersData?.next !== null) {
+    if (nextPage !== null) {
       setSearchParams({ page: searchParams.page + 1 });
     }
   };
 
-  // Reset page when search changes
-  useEffect(() => {
-    setSearchParams({ page: 1 });
-  }, [searchParams.q, setSearchParams]);
-
-  const users = usersData?.data ?? [];
-  const allRoles = allRolesData?.data ?? [];
-  const isLoading = isLoadingUsers ?? isLoadingRoles;
-
   // Create a map of roles for quick lookup
   const rolesMap = new Map<string, Role>();
-  if (allRolesData?.data) {
-    allRolesData.data.forEach((role) => rolesMap.set(role.id, role));
-  }
+  roles.forEach((role) => rolesMap.set(role.id, role));
+
+  const isLoading = isLoadingUsers ?? isLoadingRoles;
 
   return (
     <>
@@ -181,8 +160,8 @@ export function UsersTab() {
                   <TablePagination
                     onPrevious={goToPreviousPage}
                     onNext={goToNextPage}
-                    hasPrevious={usersData?.prev !== null}
-                    hasNext={usersData?.next !== null}
+                    hasPrevious={prevPage !== null}
+                    hasNext={nextPage !== null}
                     colSpan={4}
                   />
                 </>
@@ -191,25 +170,23 @@ export function UsersTab() {
           </Table.Root>
 
           <DeleteUserDialog
-            user={userToDelete}
+            user={dialogState.type === "DELETE" ? dialogState.user : null}
             onConfirm={confirmDeleteUser}
-            onCancel={() => setUserToDelete(null)}
+            onCancel={() => dispatchDialog({ type: "CLOSE" })}
             isDeleting={deleteUserMutation.isPending}
           />
 
           <EditUserDialog
-            user={userToEdit}
-            roles={allRoles}
+            user={dialogState.type === "EDIT" ? dialogState.user : null}
             onSave={updateUser}
-            onCancel={() => setUserToEdit(null)}
+            onCancel={() => dispatchDialog({ type: "CLOSE" })}
             isSaving={updateUserMutation.isPending}
           />
 
           <CreateUserDialog
-            isOpen={isCreateUserDialogOpen}
-            roles={allRoles}
+            isOpen={dialogState.type === "CREATE"}
             onSave={createUser}
-            onCancel={() => setIsCreateUserDialogOpen(false)}
+            onCancel={() => dispatchDialog({ type: "CLOSE" })}
             isSaving={createUserMutation.isPending}
           />
         </>
@@ -230,37 +207,14 @@ export function UserActionsMenu({
   onEdit,
   onDelete,
 }: UserActionsMenuProps) {
-  return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <IconButton variant="ghost" size="1" aria-label="User actions menu">
-          <DotsHorizontalIcon {...ICON_SIZE} />
-        </IconButton>
-      </DropdownMenu.Trigger>
-
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          className="dropdown-menu-content"
-          side="bottom"
-          align="end"
-          sideOffset={DROPDOWN_SIDE_OFFSET}
-        >
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => onEdit(userId)}
-          >
-            Edit user
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => onDelete(userId)}
-          >
-            Delete user
-          </DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
-  );
+  const actions = [
+    { label: "Edit User", action: () => onEdit(userId) },
+    {
+      label: "Delete User",
+      action: () => onDelete(userId),
+    },
+  ] as ActionsMenuItem[];
+  return <ActionsMenu title="User actions menu" items={actions} />;
 }
 
 // User Table Row
@@ -366,40 +320,28 @@ export function DeleteUserDialog({
 // Edit User Dialog
 interface EditUserDialogProps {
   user: User | null;
-  roles: Role[];
-  onSave: (userId: string, first: string, last: string, roleId: string) => void;
+  onSave: (userId: string, payload: UpdateUser) => void;
   onCancel: () => void;
   isSaving: boolean;
 }
 
 export function EditUserDialog({
   user,
-  roles,
   onSave,
   onCancel,
   isSaving,
 }: EditUserDialogProps) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [roleId, setRoleId] = useState("");
+  const [updatedUser, dispatch] = useReducer(editUserReducer, EMPTY_USER);
+  const { roles } = useRoles();
 
   useEffect(() => {
-    if (user) {
-      setFirstName(user.first);
-      setLastName(user.last);
-      setRoleId(user.roleId);
-    } else {
-      setFirstName("");
-      setLastName("");
-      setRoleId("");
-    }
+    if (!user) return;
+    dispatch({ type: "FILL_USER", payload: user });
   }, [user]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (user) {
-      onSave(user.id, firstName, lastName, roleId);
-    }
+    onSave(user!.id, updatedUser);
   };
 
   if (!user) return null;
@@ -414,42 +356,39 @@ export function EditUserDialog({
 
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            <label>
-              <Text as="div" size="2" mb="1" weight="bold">
-                First Name
-              </Text>
+            <Dialog.FormField label="First Name" id={IDS.firstName}>
               <TextField.Root
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                value={updatedUser.first}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIRST_NAME", payload: e.target.value })
+                }
                 placeholder="Enter first name"
                 required
                 disabled={isSaving}
+                id={IDS.firstName}
               />
-            </label>
-
-            <label>
-              <Text as="div" size="2" mb="1" weight="bold">
-                Last Name
-              </Text>
+            </Dialog.FormField>
+            <Dialog.FormField label="Last Name" id={IDS.lastName}>
               <TextField.Root
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                value={updatedUser.last}
+                onChange={(e) =>
+                  dispatch({ type: "SET_LAST_NAME", payload: e.target.value })
+                }
                 placeholder="Enter last name"
                 required
                 disabled={isSaving}
+                id={IDS.lastName}
               />
-            </label>
-
-            <label>
-              <Text as="div" size="2" mb="1" weight="bold">
-                Role
-              </Text>
+            </Dialog.FormField>
+            <Dialog.FormField label="Role" id={IDS.roleId}>
               <Select.Root
-                value={roleId}
-                onValueChange={setRoleId}
+                value={updatedUser.roleId}
+                onValueChange={(value) =>
+                  dispatch({ type: "SET_ROLE_ID", payload: value })
+                }
                 disabled={isSaving}
               >
-                <Select.Trigger placeholder="Select a role" />
+                <Select.Trigger placeholder="Select a role" id={IDS.roleId} />
                 <Select.Content>
                   {roles.map((role) => (
                     <Select.Item key={role.id} value={role.id}>
@@ -458,8 +397,7 @@ export function EditUserDialog({
                   ))}
                 </Select.Content>
               </Select.Root>
-            </label>
-
+            </Dialog.FormField>
             <Flex gap="3" mt="4" justify="end">
               <Dialog.Close>
                 <Button
@@ -485,38 +423,34 @@ export function EditUserDialog({
 // Create User Dialog
 interface CreateUserDialogProps {
   isOpen: boolean;
-  roles: Role[];
-  onSave: (first: string, last: string, roleId: string) => void;
+  onSave: (payload: CreateUser) => void;
   onCancel: () => void;
   isSaving: boolean;
 }
 
 export function CreateUserDialog({
   isOpen,
-  roles,
   onSave,
   onCancel,
   isSaving,
 }: CreateUserDialogProps) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [roleId, setRoleId] = useState("");
-
-  useEffect(() => {
-    if (!isOpen) {
-      setFirstName("");
-      setLastName("");
-      setRoleId("");
-    }
-  }, [isOpen]);
+  const [newUser, dispatch] = useReducer(createUserReducer, EMPTY_USER);
+  const { roles } = useRoles();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(firstName, lastName, roleId);
+    onSave(newUser);
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      onCancel();
+      dispatch({ type: "RESET" });
+    }
   };
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+    <Dialog.Root open={isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Content maxWidth="520px">
         <Dialog.Title>Add user</Dialog.Title>
         <Dialog.Description size="2" mb="4">
@@ -525,42 +459,39 @@ export function CreateUserDialog({
 
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            <label>
-              <Text as="div" size="2" mb="1" weight="bold">
-                First Name
-              </Text>
+            <Dialog.FormField label="First Name" id={IDS.firstName}>
               <TextField.Root
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                value={newUser.first}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIRST_NAME", payload: e.target.value })
+                }
                 placeholder="Enter first name"
                 required
                 disabled={isSaving}
+                id={IDS.firstName}
               />
-            </label>
-
-            <label>
-              <Text as="div" size="2" mb="1" weight="bold">
-                Last Name
-              </Text>
+            </Dialog.FormField>
+            <Dialog.FormField label="Last Name" id={IDS.lastName}>
               <TextField.Root
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                value={newUser.last}
+                onChange={(e) =>
+                  dispatch({ type: "SET_LAST_NAME", payload: e.target.value })
+                }
                 placeholder="Enter last name"
                 required
                 disabled={isSaving}
+                id={IDS.lastName}
               />
-            </label>
-
-            <label>
-              <Text as="div" size="2" mb="1" weight="bold">
-                Role
-              </Text>
+            </Dialog.FormField>
+            <Dialog.FormField label="Role" id={IDS.roleId}>
               <Select.Root
-                value={roleId}
-                onValueChange={setRoleId}
+                value={newUser.roleId}
+                onValueChange={(roleId) =>
+                  dispatch({ type: "SET_ROLE_ID", payload: roleId })
+                }
                 disabled={isSaving}
               >
-                <Select.Trigger placeholder="Select a role" />
+                <Select.Trigger placeholder="Select a role" id={IDS.roleId} />
                 <Select.Content>
                   {roles.map((role) => (
                     <Select.Item key={role.id} value={role.id}>
@@ -569,7 +500,7 @@ export function CreateUserDialog({
                   ))}
                 </Select.Content>
               </Select.Root>
-            </label>
+            </Dialog.FormField>
 
             <Flex gap="3" mt="4" justify="end">
               <Dialog.Close>

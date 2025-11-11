@@ -13,7 +13,7 @@ export const roleKeys = {
 };
 
 // Fetch paginated roles
-export function useRoles(page: number = 1, search?: string) {
+export function useGetRoles(page: number = 1, search?: string) {
   return useQuery({
     queryKey: roleKeys.list(page, search),
     queryFn: () => getRoles(page, search),
@@ -21,7 +21,7 @@ export function useRoles(page: number = 1, search?: string) {
 }
 
 // Fetch single role
-export function useRole(roleId: string) {
+export function useGetRole(roleId: string) {
   return useQuery({
     queryKey: roleKeys.detail(roleId),
     queryFn: () => getRole(roleId),

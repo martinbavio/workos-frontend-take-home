@@ -3,136 +3,101 @@ import {
   TextField,
   Button,
   Table,
-  IconButton,
   AlertDialog,
-  Dialog,
   Text,
   Badge,
   Checkbox,
   Spinner,
+  TextArea,
 } from "@radix-ui/themes";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { DotsHorizontalIcon } from "@radix-ui/react-icons";
-import type { Role } from "./types";
-import { useEffect, useState } from "react";
-import { DROPDOWN_SIDE_OFFSET, ICON_SIZE } from "../shared/constants";
+import * as Label from "@radix-ui/react-label";
+import type { CreateRole, Role, UpdateRole } from "./types";
+import { useEffect, useReducer } from "react";
+import { ActionsMenu, SearchBar, TablePagination } from "../shared/components";
 import {
-  useCreateRole,
-  useDeleteRole,
-  useRoles,
-  useUpdateRole,
-} from "./queries";
-import { SearchBar, TablePagination } from "../shared/components";
+  createRoleReducer,
+  editRoleReducer,
+  EMPTY_ROLE,
+  dialogReducer,
+  INITIAL_DIALOG_STATE,
+} from "./reducers";
 import { useAppSearchParams } from "../shared/hooks";
+import { useMutateRoles, useRoles } from "./hooks";
+import type { ActionsMenuItem } from "../shared/types";
+import { Dialog } from "../shared/Dialog";
+import { IDS } from "../shared/constants";
 
 // Roles Tab
 export function RolesTab() {
   const [searchParams, setSearchParams] = useAppSearchParams();
-  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
-  const [roleToEdit, setRoleToEdit] = useState<Role | null>(null);
-  const [isCreateRoleDialogOpen, setIsCreateRoleDialogOpen] = useState(false);
-
-  console.log({ searchParams });
-  // Fetch roles
-  const { data: rolesData, isLoading: isLoadingRoles } = useRoles(
-    searchParams.page,
-    searchParams.q || undefined,
+  const [dialogState, dispatchDialog] = useReducer(
+    dialogReducer,
+    INITIAL_DIALOG_STATE,
   );
 
-  // Mutations
-  const createRoleMutation = useCreateRole();
-  const updateRoleMutation = useUpdateRole();
-  const deleteRoleMutation = useDeleteRole();
+  const { roles, isLoading, prevPage, nextPage } = useRoles();
+  const { createRoleMutation, updateRoleMutation, deleteRoleMutation } =
+    useMutateRoles();
 
   // Handlers
   const editRole = (roleId: string) => {
-    const role = rolesData?.data.find((r) => r.id === roleId);
+    const role = roles.find((r) => r.id === roleId);
     if (role) {
-      setRoleToEdit(role);
+      dispatchDialog({ type: "OPEN_EDIT", role });
     }
   };
 
-  const updateRole = (
-    roleId: string,
-    name: string,
-    description: string,
-    isDefault: boolean,
-  ) => {
-    const updates: {
-      name?: string;
-      description?: string;
-      isDefault?: boolean;
-    } = {};
-
-    if (name !== roleToEdit?.name) updates.name = name;
-    if (description !== roleToEdit?.description)
-      updates.description = description;
-    if (isDefault !== roleToEdit?.isDefault) updates.isDefault = isDefault;
-
+  const updateRole = (roleId: string, payload: UpdateRole) => {
     updateRoleMutation.mutate(
-      { roleId, data: updates },
+      { roleId, data: payload },
       {
         onSuccess: () => {
-          setRoleToEdit(null);
+          dispatchDialog({ type: "CLOSE" });
         },
       },
     );
   };
 
   const deleteRole = (roleId: string) => {
-    const role = rolesData?.data.find((r) => r.id === roleId);
+    const role = roles.find((r) => r.id === roleId);
     if (role) {
-      setRoleToDelete(role);
+      dispatchDialog({ type: "OPEN_DELETE", role });
     }
   };
 
   const confirmDeleteRole = () => {
-    if (roleToDelete && !roleToDelete.isDefault) {
-      deleteRoleMutation.mutate(roleToDelete.id, {
+    if (dialogState.type === "DELETE" && !dialogState.role.isDefault) {
+      deleteRoleMutation.mutate(dialogState.role.id, {
         onSuccess: () => {
-          setRoleToDelete(null);
+          dispatchDialog({ type: "CLOSE" });
         },
       });
     }
   };
 
   const addRole = () => {
-    setIsCreateRoleDialogOpen(true);
+    dispatchDialog({ type: "OPEN_CREATE" });
   };
 
-  const createRole = (
-    name: string,
-    description: string,
-    isDefault: boolean,
-  ) => {
-    createRoleMutation.mutate(
-      { name, description: description || undefined, isDefault },
-      {
-        onSuccess: () => {
-          setIsCreateRoleDialogOpen(false);
-        },
+  const createRole = (payload: CreateRole) => {
+    createRoleMutation.mutate(payload, {
+      onSuccess: () => {
+        dispatchDialog({ type: "CLOSE" });
       },
-    );
+    });
   };
 
   const goToPreviousPage = () => {
-    if (rolesData?.prev !== null) {
+    if (prevPage !== null) {
       setSearchParams({ page: searchParams.page - 1 });
     }
   };
 
   const goToNextPage = () => {
-    if (rolesData?.next !== null) {
+    if (nextPage !== null) {
       setSearchParams({ page: searchParams.page + 1 });
     }
   };
-
-  // Reset page when search changes
-  useEffect(() => {
-    setSearchParams({ page: 1 });
-  }, [searchParams.q, setSearchParams]);
-
-  const roles = rolesData?.data || [];
 
   return (
     <>
@@ -143,7 +108,7 @@ export function RolesTab() {
         addLabel="Add role"
       />
 
-      {isLoadingRoles ? (
+      {isLoading ? (
         <Flex justify="center" align="center" py="9">
           <Spinner size="3" />
         </Flex>
@@ -182,8 +147,8 @@ export function RolesTab() {
                   <TablePagination
                     onPrevious={goToPreviousPage}
                     onNext={goToNextPage}
-                    hasPrevious={rolesData?.prev !== null}
-                    hasNext={rolesData?.next !== null}
+                    hasPrevious={prevPage !== null}
+                    hasNext={nextPage !== null}
                     colSpan={3}
                   />
                 </>
@@ -192,23 +157,23 @@ export function RolesTab() {
           </Table.Root>
 
           <DeleteRoleDialog
-            role={roleToDelete}
+            role={dialogState.type === "DELETE" ? dialogState.role : null}
             onConfirm={confirmDeleteRole}
-            onCancel={() => setRoleToDelete(null)}
+            onCancel={() => dispatchDialog({ type: "CLOSE" })}
             isDeleting={deleteRoleMutation.isPending}
           />
 
           <EditRoleDialog
-            role={roleToEdit}
+            role={dialogState.type === "EDIT" ? dialogState.role : null}
             onSave={updateRole}
-            onCancel={() => setRoleToEdit(null)}
+            onCancel={() => dispatchDialog({ type: "CLOSE" })}
             isSaving={updateRoleMutation.isPending}
           />
 
           <CreateRoleDialog
-            isOpen={isCreateRoleDialogOpen}
+            isOpen={dialogState.type === "CREATE"}
             onSave={createRole}
-            onCancel={() => setIsCreateRoleDialogOpen(false)}
+            onCancel={() => dispatchDialog({ type: "CLOSE" })}
             isSaving={createRoleMutation.isPending}
           />
         </>
@@ -229,37 +194,14 @@ export function RoleActionsMenu({
   onEdit,
   onDelete,
 }: RoleActionsMenuProps) {
-  return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <IconButton variant="ghost" size="1" aria-label="Role actions menu">
-          <DotsHorizontalIcon {...ICON_SIZE} />
-        </IconButton>
-      </DropdownMenu.Trigger>
-
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          className="dropdown-menu-content"
-          side="bottom"
-          align="end"
-          sideOffset={DROPDOWN_SIDE_OFFSET}
-        >
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => onEdit(roleId)}
-          >
-            Edit role
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => onDelete(roleId)}
-          >
-            Delete role
-          </DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
-  );
+  const actions = [
+    { label: "Edit Role", action: () => onEdit(roleId) },
+    {
+      label: "Delete Role",
+      action: () => onDelete(roleId),
+    },
+  ] as ActionsMenuItem[];
+  return <ActionsMenu title="Role actions menu" items={actions} />;
 }
 
 // Role Table Row
@@ -369,12 +311,7 @@ export function DeleteRoleDialog({
 // Edit Role Dialog
 interface EditRoleDialogProps {
   role: Role | null;
-  onSave: (
-    roleId: string,
-    name: string,
-    description: string,
-    isDefault: boolean,
-  ) => void;
+  onSave: (roleId: string, payload: UpdateRole) => void;
   onCancel: () => void;
   isSaving: boolean;
 }
@@ -385,27 +322,19 @@ export function EditRoleDialog({
   onCancel,
   isSaving,
 }: EditRoleDialogProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [isDefault, setIsDefault] = useState(false);
+  const [updatedRole, dispatch] = useReducer(
+    editRoleReducer,
+    role ?? EMPTY_ROLE,
+  );
 
   useEffect(() => {
-    if (role) {
-      setName(role.name);
-      setDescription(role.description || "");
-      setIsDefault(role.isDefault);
-    } else {
-      setName("");
-      setDescription("");
-      setIsDefault(false);
-    }
+    if (!role) return;
+    dispatch({ type: "FILL_ROLE", payload: role });
   }, [role]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (role) {
-      onSave(role.id, name, description, isDefault);
-    }
+    onSave(role!.id, updatedRole);
   };
 
   if (!role) return null;
@@ -420,41 +349,51 @@ export function EditRoleDialog({
 
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            <label>
-              <Text as="div" size="2" mb="1" weight="bold">
-                Name
-              </Text>
+            <Dialog.FormField label="Name" id={IDS.name}>
               <TextField.Root
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={updatedRole.name || ""}
+                onChange={(e) =>
+                  dispatch({ type: "SET_NAME", payload: e.target.value })
+                }
                 placeholder="Enter role name"
                 required
                 disabled={isSaving}
+                id={IDS.name}
               />
-            </label>
+            </Dialog.FormField>
 
-            <label>
-              <Text as="div" size="2" mb="1" weight="bold">
-                Description
-              </Text>
-              <TextField.Root
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+            <Dialog.FormField label="Description" id={IDS.description}>
+              <TextArea
+                value={updatedRole.description || ""}
+                onChange={(e) =>
+                  dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })
+                }
                 placeholder="Enter role description (optional)"
                 disabled={isSaving}
+                id={IDS.description}
               />
-            </label>
+            </Dialog.FormField>
 
-            <label>
+            <Dialog.FormField>
               <Flex gap="2" align="center">
                 <Checkbox
-                  checked={isDefault}
-                  onCheckedChange={(checked) => setIsDefault(checked === true)}
+                  checked={updatedRole.isDefault || false}
+                  onCheckedChange={(checked) =>
+                    dispatch({
+                      type: "SET_IS_DEFAULT",
+                      payload: checked === true,
+                    })
+                  }
                   disabled={isSaving}
+                  id={IDS.isDefault}
                 />
-                <Text size="2">Set as default role</Text>
+                <Text size="2" asChild>
+                  <Label.Root htmlFor={IDS.isDefault}>
+                    Set as default role
+                  </Label.Root>
+                </Text>
               </Flex>
-            </label>
+            </Dialog.FormField>
 
             <Flex gap="3" mt="4" justify="end">
               <Dialog.Close>
@@ -481,7 +420,7 @@ export function EditRoleDialog({
 // Create Role Dialog
 interface CreateRoleDialogProps {
   isOpen: boolean;
-  onSave: (name: string, description: string, isDefault: boolean) => void;
+  onSave: (payload: CreateRole) => void;
   onCancel: () => void;
   isSaving: boolean;
 }
@@ -492,25 +431,22 @@ export function CreateRoleDialog({
   onCancel,
   isSaving,
 }: CreateRoleDialogProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [isDefault, setIsDefault] = useState(false);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setName("");
-      setDescription("");
-      setIsDefault(false);
-    }
-  }, [isOpen]);
+  const [newRole, dispatch] = useReducer(createRoleReducer, EMPTY_ROLE);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(name, description, isDefault);
+    onSave(newRole);
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      onCancel();
+      dispatch({ type: "RESET" });
+    }
   };
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+    <Dialog.Root open={isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Content maxWidth="520px">
         <Dialog.Title>Add role</Dialog.Title>
         <Dialog.Description size="2" mb="4">
@@ -519,41 +455,51 @@ export function CreateRoleDialog({
 
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            <label>
-              <Text as="div" size="2" mb="1" weight="bold">
-                Name
-              </Text>
+            <Dialog.FormField label="Name" id="role-name">
               <TextField.Root
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                id="role-name"
+                value={newRole.name}
+                onChange={(e) =>
+                  dispatch({ type: "SET_NAME", payload: e.target.value })
+                }
                 placeholder="Enter role name"
                 required
                 disabled={isSaving}
               />
-            </label>
+            </Dialog.FormField>
 
-            <label>
-              <Text as="div" size="2" mb="1" weight="bold">
-                Description
-              </Text>
-              <TextField.Root
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+            <Dialog.FormField label="Description" id="role-description">
+              <TextArea
+                id="role-description"
+                value={newRole.description ?? ""}
+                onChange={(e) =>
+                  dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })
+                }
                 placeholder="Enter role description (optional)"
                 disabled={isSaving}
               />
-            </label>
+            </Dialog.FormField>
 
-            <label>
+            <Dialog.FormField>
               <Flex gap="2" align="center">
                 <Checkbox
-                  checked={isDefault}
-                  onCheckedChange={(checked) => setIsDefault(checked === true)}
+                  id="role-default"
+                  checked={newRole.isDefault ?? false}
+                  onCheckedChange={(checked) =>
+                    dispatch({
+                      type: "SET_IS_DEFAULT",
+                      payload: checked === true,
+                    })
+                  }
                   disabled={isSaving}
                 />
-                <Text size="2">Set as default role</Text>
+                <Text size="2" asChild>
+                  <Label.Root htmlFor="role-default">
+                    Set as default role
+                  </Label.Root>
+                </Text>
               </Flex>
-            </label>
+            </Dialog.FormField>
 
             <Flex gap="3" mt="4" justify="end">
               <Dialog.Close>

@@ -13,7 +13,7 @@ export const userKeys = {
 };
 
 // Get paginated users
-export function useUsers(page: number = 1, search?: string) {
+export function useGetUsers(page: number = 1, search?: string) {
   return useQuery({
     queryKey: userKeys.list(page, search),
     queryFn: () => getUsers(page, search),
@@ -21,7 +21,7 @@ export function useUsers(page: number = 1, search?: string) {
 }
 
 // Get single user
-export function useUser(userId: string) {
+export function useGetUser(userId: string) {
   return useQuery({
     queryKey: userKeys.detail(userId),
     queryFn: () => getUser(userId),

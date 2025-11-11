@@ -2,7 +2,6 @@ import "@radix-ui/themes/styles.css";
 import { Theme } from "@radix-ui/themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Tabs, Box } from "@radix-ui/themes";
-import { useRef } from "react";
 
 import { UsersTab } from "./features/users/components";
 import { RolesTab } from "./features/roles/components";
@@ -19,37 +18,38 @@ const queryClient = new QueryClient({
 });
 
 export function App() {
-  const [allParams, setAllParams] = useAppSearchParams();
-
-  const isInitialMount = useRef(true);
-
-  const handleTabChange = (value: string) => {
-    // Only reset params if this is not the initial mount
-    if (!isInitialMount.current) {
-      // Set all params atomically in one update
-      setAllParams({ tab: value as TabValue, q: null, page: null });
-    } else {
-      isInitialMount.current = false;
-      setAllParams({ tab: value as TabValue });
-    }
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <Theme accentColor="iris">
         <Box maxWidth="850px" mx="auto" p="5">
-          <Tabs.Root value={allParams.tab} onValueChange={handleTabChange}>
-            <Tabs.List>
-              <Tabs.Trigger value="users">Users</Tabs.Trigger>
-              <Tabs.Trigger value="roles">Roles</Tabs.Trigger>
-            </Tabs.List>
-            <Box mt="5">
-              {allParams.tab === "users" && <UsersTab />}
-              {allParams.tab === "roles" && <RolesTab />}
-            </Box>
-          </Tabs.Root>
+          <AppTabs />
         </Box>
       </Theme>
     </QueryClientProvider>
+  );
+}
+
+function AppTabs() {
+  const [searchParams, setSearchParams] = useAppSearchParams();
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value as TabValue, q: "", page: 1 });
+  };
+
+  return (
+    <Tabs.Root value={searchParams.tab} onValueChange={handleTabChange}>
+      <Tabs.List>
+        <Tabs.Trigger value="users">Users</Tabs.Trigger>
+        <Tabs.Trigger value="roles">Roles</Tabs.Trigger>
+      </Tabs.List>
+      <Box mt="5">
+        <Tabs.Content value="users">
+          <UsersTab />
+        </Tabs.Content>
+        <Tabs.Content value="roles">
+          <RolesTab />
+        </Tabs.Content>
+      </Box>
+    </Tabs.Root>
   );
 }

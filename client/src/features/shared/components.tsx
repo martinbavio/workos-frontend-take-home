@@ -1,7 +1,22 @@
-import { Flex, TextField, Button, Table, Box, Theme } from "@radix-ui/themes";
+import {
+  Flex,
+  TextField,
+  Button,
+  Table,
+  Box,
+  Theme,
+  DropdownMenu,
+  IconButton,
+} from "@radix-ui/themes";
+import * as Label from "@radix-ui/react-label";
 
-import { MagnifyingGlassIcon, PlusIcon } from "@radix-ui/react-icons";
+import {
+  DotsHorizontalIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+} from "@radix-ui/react-icons";
 import { ICON_SIZE } from "./constants";
+import type { ActionsMenuItem } from "./types";
 
 // Search Bar
 interface SearchBarProps {
@@ -81,5 +96,47 @@ export function TablePagination({
         </Table.Cell>
       </Table.Row>
     </Theme>
+  );
+}
+
+interface ActionsMenuProps {
+  title: string;
+  items: ActionsMenuItem[];
+}
+
+export function ActionsMenu({ title, items }: ActionsMenuProps) {
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger>
+        <IconButton variant="ghost" size="1" aria-label={title}>
+          <DotsHorizontalIcon {...ICON_SIZE} />
+        </IconButton>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content align="end">
+        {items.map((item) => (
+          <DropdownMenu.Item onSelect={item.action}>
+            {item.label}
+          </DropdownMenu.Item>
+        ))}
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
+  );
+}
+
+interface DialogFormFieldProps extends React.PropsWithChildren {
+  label?: string;
+  id?: string;
+}
+
+export function DialogFormField({ id, label, children }: DialogFormFieldProps) {
+  return (
+    <Flex direction="column" gap="1">
+      {label && (
+        <Label.Root className="label" htmlFor={id}>
+          {label}
+        </Label.Root>
+      )}
+      {children}
+    </Flex>
   );
 }
