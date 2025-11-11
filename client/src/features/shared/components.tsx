@@ -133,7 +133,13 @@ export function DialogFormField({ id, label, children }: DialogFormFieldProps) {
   return (
     <Flex direction="column" gap="1">
       {label && (
-        <Label.Root className="label" htmlFor={id}>
+        <Label.Root
+          htmlFor={id}
+          style={{
+            fontWeight: "bold",
+            fontSize: 12,
+          }}
+        >
           {label}
         </Label.Root>
       )}

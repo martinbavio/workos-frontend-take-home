@@ -23,9 +23,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <Theme accentColor="iris">
         <ToastProvider>
-          <Box maxWidth="850px" mx="auto" p="5">
-            <AppTabs />
-          </Box>
+          <AppTabs />
         </ToastProvider>
       </Theme>
     </QueryClientProvider>
@@ -40,19 +38,21 @@ function AppTabs() {
   };
 
   return (
-    <Tabs.Root value={searchParams.tab} onValueChange={handleTabChange}>
-      <Tabs.List>
-        <Tabs.Trigger value="users">Users</Tabs.Trigger>
-        <Tabs.Trigger value="roles">Roles</Tabs.Trigger>
-      </Tabs.List>
-      <Box mt="5">
-        <Tabs.Content value="users">
-          <UsersTab />
-        </Tabs.Content>
-        <Tabs.Content value="roles">
-          <RolesTab />
-        </Tabs.Content>
-      </Box>
-    </Tabs.Root>
+    <Box maxWidth="850px" mx="auto" p="5">
+      <Tabs.Root value={searchParams.tab} onValueChange={handleTabChange}>
+        <Tabs.List>
+          <Tabs.Trigger value="users">Users</Tabs.Trigger>
+          <Tabs.Trigger value="roles">Roles</Tabs.Trigger>
+        </Tabs.List>
+        <Box mt="5">
+          <Tabs.Content value="users">
+            <UsersTab />
+          </Tabs.Content>
+          <Tabs.Content value="roles">
+            <RolesTab />
+          </Tabs.Content>
+        </Box>
+      </Tabs.Root>
+    </Box>
   );
 }
