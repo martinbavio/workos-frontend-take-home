@@ -1,4 +1,4 @@
-# Martin Bavio <> WorKOS Frontend Take-Home Assignment
+# Martin Bavio <> WorKOS Take-Home Assignment
 
 Welcome to my version of the [WorkOS](https://workos.com/) Frontend Take-Home Assignment!
 
@@ -6,7 +6,7 @@ In this POC, I’ve implemented the UI for a simple two-tab layout that lists us
 
 The UI is based on the Figma design file I received for the take-home assignment.
 
-In order to be able to complete this exercise on time, I used 3rd party libraries, including [Radix UI](https://www.radix-ui.com/) and [TanStack Query](https://tanstack.com/query/latest). The full-list (and reasons behind each decision) is included in the tech stack section. [Claude Code](https://www.claude.com/product/claude-code) https://www.claude.com/product/claude-code (CC) was used as an assistant and it was a pleasure to work with.
+In order to be able to complete this exercise on time, I used 3rd party libraries, including [Radix UI](https://www.radix-ui.com/) and [TanStack Query](https://tanstack.com/query/latest). The full-list (and reasons behind each decision) is included in the tech stack section. [Claude Code](https://www.claude.com/product/claude-code) (CC) was used as an assistant and it was a pleasure to work with.
 
 If you are reviewing this and have any questions, feel free to [reach out](mailto:mbavio@gmail.com) — I’m happy to clarify anything.
 
@@ -30,7 +30,7 @@ There were things that I did not get to which I’d list in the todo section.
      cd client
      npm install
      npm run dev
- ``` 
+ ```
 
 ## File Structure
 ```
