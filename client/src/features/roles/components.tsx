@@ -107,7 +107,6 @@ export function RolesTab() {
         );
       },
       onError: (error) => {
-        console.log("ERROR IS", error);
         showToast("Failed to create role", error.message, "error");
       },
     });
