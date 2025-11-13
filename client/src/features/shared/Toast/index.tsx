@@ -19,7 +19,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       description?: string,
       type: "error" | "success" | "info" = "info",
     ) => {
-      const id = Math.random().toString(36).substring(7);
+      const id = crypto.randomUUID();
       setToasts((prev) => [...prev, { id, title, description, type }]);
     },
     [],

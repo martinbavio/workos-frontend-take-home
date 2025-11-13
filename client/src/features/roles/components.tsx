@@ -11,7 +11,7 @@ import {
 } from "@radix-ui/themes";
 import { Label } from "radix-ui";
 import type { CreateRole, Role, UpdateRole } from "./types";
-import { useEffect, useReducer } from "react";
+import React, { useCallback, useEffect, useReducer } from "react";
 import { ActionsMenu, SearchBar, TablePagination } from "../shared/components";
 import {
   createRoleReducer,
@@ -43,40 +43,49 @@ export function RolesTab() {
     useMutateRoles();
 
   // Handlers
-  const editRole = (roleId: string) => {
-    const role = roles.find((r) => r.id === roleId);
-    if (role) {
-      dispatchDialog({ type: "OPEN_EDIT", role });
-    }
-  };
+  const editRole = useCallback(
+    (roleId: string) => {
+      const role = roles.find((r) => r.id === roleId);
+      if (role) {
+        dispatchDialog({ type: "OPEN_EDIT", role });
+      }
+    },
+    [roles],
+  );
 
-  const updateRole = (roleId: string, payload: UpdateRole) => {
-    updateRoleMutation.mutate(
-      { roleId, data: payload },
-      {
-        onSuccess: () => {
-          dispatchDialog({ type: "CLOSE" });
-          showToast(
-            "Role updated",
-            `${payload.name} has been updated successfully`,
-            "success",
-          );
+  const updateRole = useCallback(
+    (roleId: string, payload: UpdateRole) => {
+      updateRoleMutation.mutate(
+        { roleId, data: payload },
+        {
+          onSuccess: () => {
+            dispatchDialog({ type: "CLOSE" });
+            showToast(
+              "Role updated",
+              `${payload.name} has been updated successfully`,
+              "success",
+            );
+          },
+          onError: (error) => {
+            showToast("Failed to update role", error.message, "error");
+          },
         },
-        onError: (error) => {
-          showToast("Failed to update role", error.message, "error");
-        },
-      },
-    );
-  };
+      );
+    },
+    [updateRoleMutation, showToast],
+  );
 
-  const deleteRole = (roleId: string) => {
-    const role = roles.find((r) => r.id === roleId);
-    if (role) {
-      dispatchDialog({ type: "OPEN_DELETE", role });
-    }
-  };
+  const deleteRole = useCallback(
+    (roleId: string) => {
+      const role = roles.find((r) => r.id === roleId);
+      if (role) {
+        dispatchDialog({ type: "OPEN_DELETE", role });
+      }
+    },
+    [roles],
+  );
 
-  const confirmDeleteRole = () => {
+  const confirmDeleteRole = useCallback(() => {
     if (dialogState.type === "DELETE" && !dialogState.role.isDefault) {
       const roleName = dialogState.role.name;
       deleteRoleMutation.mutate(dialogState.role.id, {
@@ -90,39 +99,42 @@ export function RolesTab() {
         },
       });
     }
-  };
+  }, [dialogState, deleteRoleMutation, showToast]);
 
-  const addRole = () => {
+  const addRole = useCallback(() => {
     dispatchDialog({ type: "OPEN_CREATE" });
-  };
+  }, []);
 
-  const createRole = (payload: CreateRole) => {
-    createRoleMutation.mutate(payload, {
-      onSuccess: () => {
-        dispatchDialog({ type: "CLOSE" });
-        showToast(
-          "Role created",
-          `${payload.name} has been created successfully`,
-          "success",
-        );
-      },
-      onError: (error) => {
-        showToast("Failed to create role", error.message, "error");
-      },
-    });
-  };
+  const createRole = useCallback(
+    (payload: CreateRole) => {
+      createRoleMutation.mutate(payload, {
+        onSuccess: () => {
+          dispatchDialog({ type: "CLOSE" });
+          showToast(
+            "Role created",
+            `${payload.name} has been created successfully`,
+            "success",
+          );
+        },
+        onError: (error) => {
+          showToast("Failed to create role", error.message, "error");
+        },
+      });
+    },
+    [createRoleMutation, showToast],
+  );
 
-  const goToPreviousPage = () => {
+  const goToPreviousPage = useCallback(() => {
     if (prevPage !== null) {
       setSearchParams({ page: searchParams.page - 1 });
     }
-  };
+  }, [prevPage, searchParams.page, setSearchParams]);
 
-  const goToNextPage = () => {
+  const goToNextPage = useCallback(() => {
     if (nextPage !== null) {
       setSearchParams({ page: searchParams.page + 1 });
     }
-  };
+  }, [nextPage, searchParams.page, setSearchParams]);
 
   return (
     <>
@@ -249,7 +261,7 @@ interface RoleTableRowProps {
   onDelete: (roleId: string) => void;
 }
 
-export function RoleTableRow({ role, onEdit, onDelete }: RoleTableRowProps) {
+export const RoleTableRow = React.memo(function RoleTableRow({ role, onEdit, onDelete }: RoleTableRowProps) {
   const createdDate = new Date(role.createdAt).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -291,7 +303,7 @@ export function RoleTableRow({ role, onEdit, onDelete }: RoleTableRowProps) {
       </Table.Cell>
     </Table.Row>
   );
-}
+});
 
 // Delete Role Dialog
 interface DeleteRoleDialogProps {
