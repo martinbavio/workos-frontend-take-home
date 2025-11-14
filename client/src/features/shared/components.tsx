@@ -17,7 +17,9 @@ import {
   PlusIcon,
 } from "@radix-ui/react-icons";
 import { ICON_SIZE } from "./constants";
-import type { ActionsMenuItem } from "./types";
+import type { ActionsMenuItem, DialogFieldContextProps } from "./types";
+import { useId, type ReactNode } from "react";
+import { DialogFieldContext, useDialogFieldContext } from "./hooks";
 
 // Search Bar
 interface SearchBarProps {
@@ -124,26 +126,47 @@ export function ActionsMenu({ title, items }: ActionsMenuProps) {
   );
 }
 
-interface DialogFormFieldProps extends React.PropsWithChildren {
-  label?: string;
-  id?: string;
-}
+export function DialogFormField({
+  children,
+}: {
+  children:
+    | React.ReactNode
+    | ((props: DialogFieldContextProps) => React.ReactNode);
+}) {
+  const id = useId();
+  const contextValue = { id };
 
-export function DialogFormField({ id, label, children }: DialogFormFieldProps) {
   return (
     <Flex direction="column" gap="1">
-      {label && (
-        <Label.Root
-          htmlFor={id}
-          style={{
-            fontWeight: "bold",
-            fontSize: 12,
-          }}
-        >
-          {label}
-        </Label.Root>
-      )}
-      {children}
+      <DialogFieldContext value={contextValue}>
+        {typeof children === "function" ? children(contextValue) : children}
+      </DialogFieldContext>
     </Flex>
+  );
+}
+
+interface DialogFormFieldLabelProps {
+  children: ReactNode;
+  noStyles?: boolean;
+}
+export function DialogFormFieldLabel({
+  children,
+  noStyles,
+}: DialogFormFieldLabelProps) {
+  const { id } = useDialogFieldContext();
+  return (
+    <Label.Root
+      htmlFor={id}
+      style={
+        noStyles
+          ? {}
+          : {
+              fontWeight: "bold",
+              fontSize: 12,
+            }
+      }
+    >
+      {children}
+    </Label.Root>
   );
 }
