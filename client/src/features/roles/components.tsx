@@ -9,7 +9,6 @@ import {
   Checkbox,
   TextArea,
 } from "@radix-ui/themes";
-import { Label } from "radix-ui";
 import type { CreateRole, Role, UpdateRole } from "./types";
 import { useEffect, useReducer } from "react";
 import { ActionsMenu, SearchBar, TablePagination } from "../shared/components";
@@ -24,7 +23,7 @@ import { useAppSearchParams } from "../shared/hooks";
 import { useMutateRoles, useRoles } from "./hooks";
 import type { ActionsMenuItem } from "../shared/types";
 import { Dialog } from "../shared/Dialog";
-import { ICON_SIZE, IDS } from "../shared/constants";
+import { ICON_SIZE } from "../shared/constants";
 import { useToast } from "../shared/Toast/hooks";
 import { Spinner } from "../shared/Spinner";
 import { CircleBackslashIcon } from "@radix-ui/react-icons";
@@ -391,50 +390,63 @@ export function EditRoleDialog({
 
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            <Dialog.FormField label="Name" id={IDS.name}>
-              <TextField.Root
-                value={updatedRole.name || ""}
-                onChange={(e) =>
-                  dispatch({ type: "SET_NAME", payload: e.target.value })
-                }
-                placeholder="Enter role name"
-                required
-                disabled={isSaving}
-                id={IDS.name}
-              />
-            </Dialog.FormField>
-
-            <Dialog.FormField label="Description" id={IDS.description}>
-              <TextArea
-                value={updatedRole.description || ""}
-                onChange={(e) =>
-                  dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })
-                }
-                placeholder="Enter role description (optional)"
-                disabled={isSaving}
-                id={IDS.description}
-              />
-            </Dialog.FormField>
-
             <Dialog.FormField>
-              <Flex gap="2" align="center">
-                <Checkbox
-                  checked={updatedRole.isDefault || false}
-                  onCheckedChange={(checked) =>
-                    dispatch({
-                      type: "SET_IS_DEFAULT",
-                      payload: checked === true,
-                    })
-                  }
-                  disabled={isSaving}
-                  id={IDS.isDefault}
-                />
-                <Text size="2" asChild>
-                  <Label.Root htmlFor={IDS.isDefault}>
-                    Set as default role
-                  </Label.Root>
-                </Text>
-              </Flex>
+              {({ id }) => (
+                <>
+                  <Dialog.FormLabel>Name</Dialog.FormLabel>
+                  <TextField.Root
+                    value={updatedRole.name || ""}
+                    onChange={(e) =>
+                      dispatch({ type: "SET_NAME", payload: e.target.value })
+                    }
+                    placeholder="Enter role name"
+                    required
+                    disabled={isSaving}
+                    id={id}
+                  />
+                </>
+              )}
+            </Dialog.FormField>
+            <Dialog.FormField>
+              {({ id }) => (
+                <>
+                  <Dialog.FormLabel>Description</Dialog.FormLabel>
+                  <TextArea
+                    value={updatedRole.description || ""}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "SET_DESCRIPTION",
+                        payload: e.target.value,
+                      })
+                    }
+                    placeholder="Enter role description (optional)"
+                    disabled={isSaving}
+                    id={id}
+                  />
+                </>
+              )}
+            </Dialog.FormField>
+            <Dialog.FormField>
+              {({ id }) => (
+                <Flex gap="2" align="center">
+                  <Checkbox
+                    checked={updatedRole.isDefault || false}
+                    onCheckedChange={(checked) =>
+                      dispatch({
+                        type: "SET_IS_DEFAULT",
+                        payload: checked === true,
+                      })
+                    }
+                    disabled={isSaving}
+                    id={id}
+                  />
+                  <Text size="2" asChild>
+                    <Dialog.FormLabel noStyles>
+                      Set as default role
+                    </Dialog.FormLabel>
+                  </Text>
+                </Flex>
+              )}
             </Dialog.FormField>
 
             <Flex gap="3" mt="4" justify="end">
@@ -497,50 +509,65 @@ export function CreateRoleDialog({
 
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            <Dialog.FormField label="Name" id="role-name">
-              <TextField.Root
-                id="role-name"
-                value={newRole.name}
-                onChange={(e) =>
-                  dispatch({ type: "SET_NAME", payload: e.target.value })
-                }
-                placeholder="Enter role name"
-                required
-                disabled={isSaving}
-              />
-            </Dialog.FormField>
-
-            <Dialog.FormField label="Description" id="role-description">
-              <TextArea
-                id="role-description"
-                value={newRole.description ?? ""}
-                onChange={(e) =>
-                  dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })
-                }
-                placeholder="Enter role description (optional)"
-                disabled={isSaving}
-              />
-            </Dialog.FormField>
-
             <Dialog.FormField>
-              <Flex gap="2" align="center">
-                <Checkbox
-                  id="role-default"
-                  checked={newRole.isDefault ?? false}
-                  onCheckedChange={(checked) =>
-                    dispatch({
-                      type: "SET_IS_DEFAULT",
-                      payload: checked === true,
-                    })
-                  }
-                  disabled={isSaving}
-                />
-                <Text size="2" asChild>
-                  <Label.Root htmlFor="role-default">
-                    Set as default role
-                  </Label.Root>
-                </Text>
-              </Flex>
+              {({ id }) => (
+                <>
+                  <Dialog.FormLabel>Name</Dialog.FormLabel>
+                  <TextField.Root
+                    id={id}
+                    value={newRole.name}
+                    onChange={(e) =>
+                      dispatch({ type: "SET_NAME", payload: e.target.value })
+                    }
+                    placeholder="Enter role name"
+                    required
+                    disabled={isSaving}
+                  />
+                </>
+              )}
+            </Dialog.FormField>
+            <Dialog.FormField>
+              {({ id }) => (
+                <>
+                  <Dialog.FormLabel>Description</Dialog.FormLabel>
+                  <TextArea
+                    id={id}
+                    value={newRole.description ?? ""}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "SET_DESCRIPTION",
+                        payload: e.target.value,
+                      })
+                    }
+                    placeholder="Enter role description (optional)"
+                    disabled={isSaving}
+                  />
+                </>
+              )}
+            </Dialog.FormField>
+            <Dialog.FormField>
+              {({ id }) => (
+                <>
+                  <Flex gap="2" align="center">
+                    <Checkbox
+                      id={id}
+                      checked={newRole.isDefault ?? false}
+                      onCheckedChange={(checked) =>
+                        dispatch({
+                          type: "SET_IS_DEFAULT",
+                          payload: checked === true,
+                        })
+                      }
+                      disabled={isSaving}
+                    />
+                    <Text size="2" asChild>
+                      <Dialog.FormLabel noStyles>
+                        Set as default role
+                      </Dialog.FormLabel>
+                    </Text>
+                  </Flex>
+                </>
+              )}
             </Dialog.FormField>
 
             <Flex gap="3" mt="4" justify="end">

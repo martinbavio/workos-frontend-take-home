@@ -26,7 +26,7 @@ import {
   INITIAL_DIALOG_STATE,
 } from "./reducers";
 import { Dialog } from "../shared/Dialog";
-import { ICON_SIZE, IDS } from "../shared/constants";
+import { ICON_SIZE } from "../shared/constants";
 import { useToast } from "../shared/Toast/hooks";
 import { Spinner } from "../shared/Spinner";
 import { CircleBackslashIcon } from "@radix-ui/react-icons";
@@ -400,47 +400,68 @@ export function EditUserDialog({
 
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            <Dialog.FormField label="First Name" id={IDS.firstName}>
-              <TextField.Root
-                value={updatedUser.first}
-                onChange={(e) =>
-                  dispatch({ type: "SET_FIRST_NAME", payload: e.target.value })
-                }
-                placeholder="Enter first name"
-                required
-                disabled={isSaving}
-                id={IDS.firstName}
-              />
+            <Dialog.FormField>
+              {({ id }) => (
+                <>
+                  <Dialog.FormLabel>First Name</Dialog.FormLabel>
+                  <TextField.Root
+                    value={updatedUser.first}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "SET_FIRST_NAME",
+                        payload: e.target.value,
+                      })
+                    }
+                    placeholder="Enter first name"
+                    required
+                    disabled={isSaving}
+                    id={id}
+                  />
+                </>
+              )}
             </Dialog.FormField>
-            <Dialog.FormField label="Last Name" id={IDS.lastName}>
-              <TextField.Root
-                value={updatedUser.last}
-                onChange={(e) =>
-                  dispatch({ type: "SET_LAST_NAME", payload: e.target.value })
-                }
-                placeholder="Enter last name"
-                required
-                disabled={isSaving}
-                id={IDS.lastName}
-              />
+            <Dialog.FormField>
+              {({ id }) => (
+                <>
+                  <Dialog.FormLabel>Last Name</Dialog.FormLabel>
+                  <TextField.Root
+                    value={updatedUser.last}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "SET_LAST_NAME",
+                        payload: e.target.value,
+                      })
+                    }
+                    placeholder="Enter last name"
+                    required
+                    disabled={isSaving}
+                    id={id}
+                  />
+                </>
+              )}
             </Dialog.FormField>
-            <Dialog.FormField label="Role" id={IDS.roleId}>
-              <Select.Root
-                value={updatedUser.roleId}
-                onValueChange={(value) =>
-                  dispatch({ type: "SET_ROLE_ID", payload: value })
-                }
-                disabled={isSaving}
-              >
-                <Select.Trigger placeholder="Select a role" id={IDS.roleId} />
-                <Select.Content>
-                  {roles.map((role) => (
-                    <Select.Item key={role.id} value={role.id}>
-                      {role.name}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Root>
+            <Dialog.FormField>
+              {({ id }) => (
+                <>
+                  <Dialog.FormLabel>Role</Dialog.FormLabel>
+                  <Select.Root
+                    value={updatedUser.roleId}
+                    onValueChange={(value) =>
+                      dispatch({ type: "SET_ROLE_ID", payload: value })
+                    }
+                    disabled={isSaving}
+                  >
+                    <Select.Trigger placeholder="Select a role" id={id} />
+                    <Select.Content>
+                      {roles.map((role) => (
+                        <Select.Item key={role.id} value={role.id}>
+                          {role.name}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </>
+              )}
             </Dialog.FormField>
             <Flex gap="3" mt="4" justify="end">
               <Dialog.Close>
@@ -503,47 +524,68 @@ export function CreateUserDialog({
 
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            <Dialog.FormField label="First Name" id={IDS.firstName}>
-              <TextField.Root
-                value={newUser.first}
-                onChange={(e) =>
-                  dispatch({ type: "SET_FIRST_NAME", payload: e.target.value })
-                }
-                placeholder="Enter first name"
-                required
-                disabled={isSaving}
-                id={IDS.firstName}
-              />
+            <Dialog.FormField>
+              {({ id }) => (
+                <>
+                  <Dialog.FormLabel>First Name</Dialog.FormLabel>
+                  <TextField.Root
+                    value={newUser.first}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "SET_FIRST_NAME",
+                        payload: e.target.value,
+                      })
+                    }
+                    placeholder="Enter first name"
+                    required
+                    disabled={isSaving}
+                    id={id}
+                  />
+                </>
+              )}
             </Dialog.FormField>
-            <Dialog.FormField label="Last Name" id={IDS.lastName}>
-              <TextField.Root
-                value={newUser.last}
-                onChange={(e) =>
-                  dispatch({ type: "SET_LAST_NAME", payload: e.target.value })
-                }
-                placeholder="Enter last name"
-                required
-                disabled={isSaving}
-                id={IDS.lastName}
-              />
+            <Dialog.FormField>
+              {({ id }) => (
+                <>
+                  <Dialog.FormLabel>Last Name</Dialog.FormLabel>
+                  <TextField.Root
+                    value={newUser.last}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "SET_LAST_NAME",
+                        payload: e.target.value,
+                      })
+                    }
+                    placeholder="Enter last name"
+                    required
+                    disabled={isSaving}
+                    id={id}
+                  />
+                </>
+              )}
             </Dialog.FormField>
-            <Dialog.FormField label="Role" id={IDS.roleId}>
-              <Select.Root
-                value={newUser.roleId}
-                onValueChange={(roleId) =>
-                  dispatch({ type: "SET_ROLE_ID", payload: roleId })
-                }
-                disabled={isSaving}
-              >
-                <Select.Trigger placeholder="Select a role" id={IDS.roleId} />
-                <Select.Content>
-                  {roles.map((role) => (
-                    <Select.Item key={role.id} value={role.id}>
-                      {role.name}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Root>
+            <Dialog.FormField>
+              {({ id }) => (
+                <>
+                  <Dialog.FormLabel>Role</Dialog.FormLabel>
+                  <Select.Root
+                    value={newUser.roleId}
+                    onValueChange={(roleId) =>
+                      dispatch({ type: "SET_ROLE_ID", payload: roleId })
+                    }
+                    disabled={isSaving}
+                  >
+                    <Select.Trigger placeholder="Select a role" id={id} />
+                    <Select.Content>
+                      {roles.map((role) => (
+                        <Select.Item key={role.id} value={role.id}>
+                          {role.name}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </>
+              )}
             </Dialog.FormField>
 
             <Flex gap="3" mt="4" justify="end">

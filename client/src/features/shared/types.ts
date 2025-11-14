@@ -11,3 +11,7 @@ export type ActionsMenuItem = {
   label: string;
   action: () => void;
 };
+
+export interface DialogFieldContextProps {
+  id: string;
+}

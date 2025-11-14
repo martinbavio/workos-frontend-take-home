@@ -1,5 +1,5 @@
 import { Dialog as RadixDialog } from "@radix-ui/themes";
-import { DialogFormField } from "./components";
+import { DialogFormField, DialogFormFieldLabel } from "./components";
 
 // Export Dialog as a namespace with all Radix Dialog parts + FormField
 export const Dialog = {
@@ -10,4 +10,5 @@ export const Dialog = {
   Description: RadixDialog.Description,
   Close: RadixDialog.Close,
   FormField: DialogFormField,
+  FormLabel: DialogFormFieldLabel,
 };
