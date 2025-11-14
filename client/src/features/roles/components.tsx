@@ -440,11 +440,10 @@ export function EditRoleDialog({
                     disabled={isSaving}
                     id={id}
                   />
-                  <Text size="2" asChild>
-                    <Dialog.FormLabel noStyles>
-                      Set as default role
-                    </Dialog.FormLabel>
-                  </Text>
+
+                  <Dialog.FormLabel noStyles>
+                    <Text size="2">Set as default role</Text>
+                  </Dialog.FormLabel>
                 </Flex>
               )}
             </Dialog.FormField>
@@ -560,11 +559,9 @@ export function CreateRoleDialog({
                       }
                       disabled={isSaving}
                     />
-                    <Text size="2" asChild>
-                      <Dialog.FormLabel noStyles>
-                        Set as default role
-                      </Dialog.FormLabel>
-                    </Text>
+                    <Dialog.FormLabel noStyles>
+                      <Text size="2">Set as default role</Text>
+                    </Dialog.FormLabel>
                   </Flex>
                 </>
               )}
