@@ -9,6 +9,7 @@ This is a React application built with Vite, TypeScript, and designed to use Rad
 - **Framework**: React 19.1.1
 - **Build Tool**: Vite 7.1.7
 - **Language**: TypeScript 5.9.3
+- **Testing**: Vitest with vitest-browser-react - for testing React components in a real browser environment
 - **Data Fetching**: React Query (TanStack Query) - for server state management and API communication
 - **URL State Management**: nuqs - for type-safe URL search params management
 - **UI Components**:
@@ -317,6 +318,312 @@ fetch('http://localhost:3002/roles/role-123', {
 - `npm run build` - Build for production (TypeScript check + Vite build)
 - `npm run lint` - Run ESLint to check code quality
 - `npm run preview` - Preview production build locally
+- `npm run test` - Run tests in watch mode
+
+## Testing with Vitest Browser React
+
+**This project uses Vitest with vitest-browser-react for testing React components in a real browser environment.**
+
+### Why vitest-browser-react?
+
+vitest-browser-react provides a testing environment that:
+
+1. **Runs tests in real browsers** (via Playwright) - more accurate than jsdom
+2. **Better simulates user interactions** - real DOM events, layout, and rendering
+3. **Integrates seamlessly with Vitest** - fast, modern testing framework built for Vite
+4. **Supports React 19** - full support for modern React features
+
+### Installation
+
+```bash
+cd client
+npm install -D vitest vitest-browser-react @vitest/browser-playwright playwright
+```
+
+After installation, install the Playwright browser:
+
+```bash
+npx playwright install chromium
+```
+
+### Configuration
+
+Vitest is configured in `vite.config.ts`:
+
+```tsx
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+import { playwright } from "@vitest/browser-playwright";
+
+export default defineConfig({
+  server: {
+    port: 3001,
+  },
+  plugins: [react()],
+  test: {
+    browser: {
+      enabled: true,
+      instances: [
+        {
+          browser: "chromium",
+        },
+      ],
+      provider: playwright(),
+    },
+  },
+});
+```
+
+**Important configuration notes:**
+- The `provider` must use the factory function `playwright()` from `@vitest/browser-playwright`
+- Use `instances` array to specify which browsers to test with
+
+### Writing Tests
+
+#### Basic Component Test
+
+```tsx
+// ComponentName.test.tsx
+import { render } from 'vitest-browser-react';
+import { expect, test } from 'vitest';
+import { ComponentName } from './ComponentName';
+
+test('renders component', async () => {
+  const screen = await render(<ComponentName />);
+  
+  const heading = screen.getByText('Hello World');
+  await expect.element(heading).toBeInTheDocument();
+});
+```
+
+**Note:** The `render()` function returns a `screen` object with query methods like `getByText`, `getByRole`, etc.
+
+#### Testing User Interactions
+
+```tsx
+import { render } from 'vitest-browser-react';
+import { expect, test } from 'vitest';
+import { userEvent } from 'vitest/browser';
+import { MyButton } from './MyButton';
+
+test('handles click events', async () => {
+  const screen = await render(<MyButton />);
+  
+  const button = screen.getByRole('button');
+  await userEvent.click(button);
+  
+  await expect.element(button).toHaveTextContent('Clicked!');
+});
+```
+
+#### Testing Forms
+
+```tsx
+import { render } from 'vitest-browser-react';
+import { expect, test, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
+import { LoginForm } from './LoginForm';
+
+test('submits form with user input', async () => {
+  const handleSubmit = vi.fn();
+  const screen = await render(<LoginForm onSubmit={handleSubmit} />);
+  
+  const emailInput = screen.getByLabel('Email');
+  const passwordInput = screen.getByLabel('Password');
+  const loginButton = screen.getByRole('button', { name: 'Login' });
+  
+  await userEvent.type(emailInput, 'user@example.com');
+  await userEvent.type(passwordInput, 'password123');
+  await userEvent.click(loginButton);
+  
+  expect(handleSubmit).toHaveBeenCalledWith({
+    email: 'user@example.com',
+    password: 'password123',
+  });
+});
+```
+
+#### Testing with React Query
+
+```tsx
+import { render } from 'vitest-browser-react';
+import { expect, test, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { UserList } from './UserList';
+
+test('fetches and displays users', async () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+  
+  // Mock fetch
+  global.fetch = vi.fn(() =>
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        data: [
+          { id: '1', first: 'John', last: 'Doe' },
+          { id: '2', first: 'Jane', last: 'Smith' },
+        ],
+      }),
+    })
+  );
+  
+  const screen = await render(
+    <QueryClientProvider client={queryClient}>
+      <UserList />
+    </QueryClientProvider>
+  );
+  
+  await expect.element(screen.getByText('John Doe')).toBeInTheDocument();
+  await expect.element(screen.getByText('Jane Smith')).toBeInTheDocument();
+});
+```
+
+#### Testing Async Behavior
+
+```tsx
+import { render } from 'vitest-browser-react';
+import { expect, test } from 'vitest';
+import { AsyncComponent } from './AsyncComponent';
+
+test('shows loading state then content', async () => {
+  const screen = await render(<AsyncComponent />);
+  
+  // Initially shows loading
+  const loadingText = screen.getByText('Loading...');
+  await expect.element(loadingText).toBeInTheDocument();
+  
+  // Wait for content to appear
+  const content = screen.getByText('Content loaded!');
+  await expect.element(content).toBeInTheDocument();
+});
+```
+
+**Note:** Vitest's `expect.element()` automatically waits for elements to appear, so you often don't need explicit `waitFor()` calls.
+
+### Best Practices
+
+1. **Use the `screen` object from render**: Always await `render()` and use the returned `screen` object for queries
+   ```tsx
+   const screen = await render(<MyComponent />);
+   const button = screen.getByRole('button', { name: 'Submit' });
+   await expect.element(button).toBeInTheDocument();
+   ```
+
+2. **Use semantic queries**: Prefer `getByRole`, `getByLabel`, `getByText` over `getByTestId`
+   ```tsx
+   // Good
+   screen.getByRole('button', { name: 'Submit' })
+   
+   // Avoid
+   screen.getByTestId('submit-button')
+   ```
+
+3. **Test user behavior, not implementation**: Focus on what users see and do
+   ```tsx
+   // Good - tests user interaction
+   await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+   await expect.element(screen.getByText('Item added')).toBeInTheDocument();
+   
+   // Avoid - tests implementation details
+   expect(component.state.items.length).toBe(1);
+   ```
+
+4. **Use async matchers**: Always await expect for DOM queries
+   ```tsx
+   await expect.element(screen.getByText('Hello')).toBeInTheDocument();
+   ```
+
+5. **Clean up after tests**: vitest-browser-react handles cleanup automatically
+
+6. **Mock external dependencies**: Use `vi.fn()` and `vi.mock()` for API calls and external services
+   ```tsx
+   import { vi } from 'vitest';
+   
+   global.fetch = vi.fn(() => Promise.resolve({
+     ok: true,
+     json: () => Promise.resolve({ data: [] })
+   }));
+   ```
+
+7. **Test accessibility**: Use role-based queries to ensure components are accessible
+   ```tsx
+   screen.getByRole('button', { name: 'Submit' })
+   screen.getByLabel('Email address')
+   ```
+
+8. **Wrap components with providers**: Remember to wrap components that need context providers
+   ```tsx
+   import { Theme } from '@radix-ui/themes';
+   
+   const screen = await render(
+     <Theme>
+       <MyComponent />
+     </Theme>
+   );
+   ```
+
+### File Naming Convention
+
+- Test files: `ComponentName.test.tsx` or `ComponentName.test.ts`
+- Place test files next to the components they test
+
+### Running Tests
+
+```bash
+# Run all tests in watch mode
+npm run test
+
+# Run tests once (CI mode)
+npm run test:run
+
+# Run specific test file
+npm run test ComponentName.test.tsx
+```
+
+### Screen Queries
+
+The `screen` object returned from `render()` provides Playwright-like queries:
+
+- `screen.getByRole(role, options)` - Query by ARIA role (e.g., 'button', 'textbox', 'heading')
+- `screen.getByText(text)` - Query by text content
+- `screen.getByLabel(text)` - Query by associated label text
+- `screen.getByPlaceholder(text)` - Query by placeholder text
+- `screen.getByAltText(text)` - Query by alt text (for images)
+- `screen.getByTitle(text)` - Query by title attribute
+- `screen.getByTestId(id)` - Query by test ID (use sparingly)
+
+**Example:**
+```tsx
+const screen = await render(<MyComponent />);
+const button = screen.getByRole('button', { name: 'Submit' });
+const input = screen.getByPlaceholder('Enter your email');
+const heading = screen.getByRole('heading', { level: 1 });
+```
+
+### Common Matchers
+
+vitest-browser-react provides these matchers for DOM assertions:
+
+- `toBeInTheDocument()` - Element exists in the DOM
+- `toHaveTextContent(text)` - Element contains text
+- `toBeVisible()` - Element is visible to the user
+- `toBeDisabled()` - Element is disabled
+- `toBeEnabled()` - Element is enabled
+- `toHaveAttribute(attr, value)` - Element has attribute with value
+- `toHaveClass(className)` - Element has CSS class
+- `toHaveValue(value)` - Input has value
+
+**Example:**
+```tsx
+const screen = await render(<MyComponent />);
+await expect.element(screen.getByRole('button')).toBeEnabled();
+await expect.element(screen.getByText('Success')).toBeVisible();
+await expect.element(screen.getByPlaceholder('Search')).toHaveValue('test');
+```
 
 ## UI Component Guidelines
 
@@ -851,6 +1158,8 @@ function Users() {
 ## Resources
 
 - [React Documentation](https://react.dev)
+- [Vitest Documentation](https://vitest.dev)
+- [vitest-browser-react Documentation](https://github.com/vitest-dev/vitest-browser-react)
 - [TanStack Query (React Query) Documentation](https://tanstack.com/query/latest/docs/framework/react/overview)
 - [nuqs Documentation](https://nuqs.47ng.com/)
 - [Radix Themes Documentation](https://www.radix-ui.com/themes/docs/overview/getting-started)
