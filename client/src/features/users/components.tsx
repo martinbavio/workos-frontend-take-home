@@ -234,20 +234,23 @@ export function UserTableRow({ user, role }: UserTableRowProps) {
       </Table.Cell>
       <Table.Cell>
         <Flex justify="end">
-          <ActionsMenu title="User actions">
-            <EditUserDialog
-              user={user}
-              onSave={updateUser}
-              isSaving={updateUserMutation.isPending}
-              onCancel={() => {}}
-            />
-            <DeleteUserDialog
-              user={user}
-              onConfirm={deleteUser}
-              isDeleting={deleteUserMutation.isPending}
-              onCancel={() => {}}
-            />
-          </ActionsMenu>
+          <ActionsMenu
+            title="User actions"
+            items={[
+              <EditUserDialog
+                user={user}
+                onSave={updateUser}
+                isSaving={updateUserMutation.isPending}
+                onCancel={() => {}}
+              />,
+              <DeleteUserDialog
+                user={user}
+                onConfirm={deleteUser}
+                isDeleting={deleteUserMutation.isPending}
+                onCancel={() => {}}
+              />,
+            ]}
+          />
         </Flex>
       </Table.Cell>
     </Table.Row>
@@ -273,7 +276,9 @@ export function DeleteUserDialog({
   return (
     <AlertDialog.Root onOpenChange={(open) => !open && onCancel()}>
       <AlertDialog.Trigger>
-        <Button variant="ghost">Delete User</Button>
+        <Button variant="outline" radius="none">
+          Delete User
+        </Button>
       </AlertDialog.Trigger>
       <AlertDialog.Content maxWidth="520px">
         <AlertDialog.Title>Delete user</AlertDialog.Title>
@@ -336,7 +341,9 @@ export function EditUserDialog({
   return (
     <Dialog.Root onOpenChange={(open) => !open && onCancel()}>
       <Dialog.Trigger>
-        <Button variant="ghost">Edit User</Button>
+        <Button variant="outline" radius="none">
+          Edit User
+        </Button>
       </Dialog.Trigger>
       <Dialog.Content maxWidth="520px">
         <Dialog.Title>Edit user</Dialog.Title>

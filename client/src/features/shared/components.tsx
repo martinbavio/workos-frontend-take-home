@@ -91,18 +91,26 @@ export function TablePagination({
 
 interface ActionsMenuProps {
   title: string;
-  children: ReactNode;
+  items: ReactNode[];
 }
 
-export function ActionsMenu({ title, children }: ActionsMenuProps) {
+export function ActionsMenu({ title, items }: ActionsMenuProps) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
         <IconButton variant="ghost" size="1" aria-label={title}>
-          <DotsHorizontalIcon {...ICON_SIZE} />
+          <DotsHorizontalIcon {...ICON_SIZE} aria-hidden="true" />
         </IconButton>
       </DropdownMenu.Trigger>
-      <DropdownMenu.Content align="end">{children}</DropdownMenu.Content>
+      <DropdownMenu.Content align="end">
+        <Flex gap="1" direction="column">
+          {items.map((item, index) => (
+            <DropdownMenu.Item key={index} asChild>
+              {item}
+            </DropdownMenu.Item>
+          ))}
+        </Flex>
+      </DropdownMenu.Content>
     </DropdownMenu.Root>
   );
 }

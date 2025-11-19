@@ -237,13 +237,14 @@ export function RoleActionsMenu({
     },
   ];
   return (
-    <ActionsMenu title="Role actions menu">
-      {actions.map((item) => (
+    <ActionsMenu
+      title="Role actions menu"
+      items={actions.map((item) => (
         <DropdownMenu.Item key={item.label} onSelect={item.action}>
           {item.label}
         </DropdownMenu.Item>
       ))}
-    </ActionsMenu>
+    />
   );
 }
 
