@@ -7,11 +7,6 @@ export interface PagedData<T> {
 
 export type TabValue = "users" | "roles";
 
-export type ActionsMenuItem = {
-  label: string;
-  action: () => void;
-};
-
 export interface DialogFieldContextProps {
   id: string;
 }

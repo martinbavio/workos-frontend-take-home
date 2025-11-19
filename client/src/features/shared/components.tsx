@@ -11,13 +11,9 @@ import {
 } from "@radix-ui/themes";
 import { Label } from "radix-ui";
 
-import {
-  DotsHorizontalIcon,
-  MagnifyingGlassIcon,
-  PlusIcon,
-} from "@radix-ui/react-icons";
+import { DotsHorizontalIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { ICON_SIZE } from "./constants";
-import type { ActionsMenuItem, DialogFieldContextProps } from "./types";
+import { type DialogFieldContextProps } from "./types";
 import { useId, type ReactNode } from "react";
 import { DialogFieldContext, useDialogFieldContext } from "./hooks";
 
@@ -26,15 +22,10 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onAdd: () => void;
-  addLabel: string;
+  action?: ReactNode;
 }
 
-export function SearchBar({
-  value,
-  onChange,
-  onAdd,
-  addLabel,
-}: SearchBarProps) {
+export function SearchBar({ value, onChange, action }: SearchBarProps) {
   return (
     <Flex gap="2" mb="5">
       <Box flexGrow="1">
@@ -49,11 +40,7 @@ export function SearchBar({
           </TextField.Slot>
         </TextField.Root>
       </Box>
-
-      <Button onClick={onAdd}>
-        <PlusIcon {...ICON_SIZE} aria-hidden="true" />
-        {addLabel}
-      </Button>
+      {action}
     </Flex>
   );
 }
@@ -104,10 +91,10 @@ export function TablePagination({
 
 interface ActionsMenuProps {
   title: string;
-  items: ActionsMenuItem[];
+  children: ReactNode;
 }
 
-export function ActionsMenu({ title, items }: ActionsMenuProps) {
+export function ActionsMenu({ title, children }: ActionsMenuProps) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
@@ -115,13 +102,7 @@ export function ActionsMenu({ title, items }: ActionsMenuProps) {
           <DotsHorizontalIcon {...ICON_SIZE} />
         </IconButton>
       </DropdownMenu.Trigger>
-      <DropdownMenu.Content align="end">
-        {items.map((item) => (
-          <DropdownMenu.Item key={item.label} onSelect={item.action}>
-            {item.label}
-          </DropdownMenu.Item>
-        ))}
-      </DropdownMenu.Content>
+      <DropdownMenu.Content align="end">{children}</DropdownMenu.Content>
     </DropdownMenu.Root>
   );
 }

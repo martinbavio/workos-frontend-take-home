@@ -17,7 +17,7 @@ import { ActionsMenu, SearchBar, TablePagination } from "../shared/components";
 import { useAppSearchParams } from "../shared/hooks";
 import { useMutateUsers, useUsers } from "./hooks";
 import { useRoles } from "../roles/hooks";
-import type { ActionsMenuItem } from "../shared/types";
+
 import {
   createUserReducer,
   editUserReducer,
@@ -29,74 +29,21 @@ import { Dialog } from "../shared/Dialog";
 import { ICON_SIZE } from "../shared/constants";
 import { useToast } from "../shared/Toast/hooks";
 import { Spinner } from "../shared/Spinner";
-import { CircleBackslashIcon } from "@radix-ui/react-icons";
+import { CircleBackslashIcon, PlusIcon } from "@radix-ui/react-icons";
 
 // Users Tab
 export function UsersTab() {
   const [searchParams, setSearchParams] = useAppSearchParams();
-  const [dialogState, dispatchDialog] = useReducer(
-    dialogReducer,
-    INITIAL_DIALOG_STATE,
-  );
+  const [, dispatchDialog] = useReducer(dialogReducer, INITIAL_DIALOG_STATE);
   const { showToast } = useToast();
 
   const { users, isLoading: isLoadingUsers, prevPage, nextPage } = useUsers();
-  const { createUserMutation, updateUserMutation, deleteUserMutation } =
-    useMutateUsers();
+  const { createUserMutation } = useMutateUsers();
 
   // Fetch all roles for user role selection (no search/pagination)
   const { roles, isLoading: isLoadingRoles } = useRoles();
 
   // Handlers
-  const editUser = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    if (user) {
-      dispatchDialog({ type: "OPEN_EDIT", user });
-    }
-  };
-
-  const updateUser = (userId: string, payload: UpdateUser) => {
-    updateUserMutation.mutate(
-      { userId, data: payload },
-      {
-        onSuccess: () => {
-          dispatchDialog({ type: "CLOSE" });
-          showToast(
-            "User updated",
-            `${payload.first} ${payload.last} has been updated successfully`,
-            "success",
-          );
-        },
-        onError: (error) => {
-          showToast("Failed to update user", error.message, "error");
-        },
-      },
-    );
-  };
-
-  const deleteUser = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    if (user) {
-      dispatchDialog({ type: "OPEN_DELETE", user });
-    }
-  };
-
-  const confirmDeleteUser = () => {
-    if (dialogState.type === "DELETE") {
-      const userName = `${dialogState.user.first} ${dialogState.user.last}`;
-      deleteUserMutation.mutate(dialogState.user.id, {
-        onSuccess: () => {
-          dispatchDialog({ type: "CLOSE" });
-          showToast(
-            "User deleted",
-            `${userName} has been deleted successfully`,
-            "success",
-          );
-        },
-      });
-    }
-  };
-
   const addUser = () => {
     dispatchDialog({ type: "OPEN_CREATE" });
   };
@@ -141,7 +88,12 @@ export function UsersTab() {
         value={searchParams.q}
         onChange={(value) => setSearchParams({ q: value })}
         onAdd={addUser}
-        addLabel="Add user"
+        action={
+          <CreateUserDialog
+            onSave={createUser}
+            isSaving={createUserMutation.isPending}
+          />
+        }
       />
 
       <Table.Root variant="surface" style={{ tableLayout: "fixed" }}>
@@ -196,8 +148,6 @@ export function UsersTab() {
                 key={user.id}
                 user={user}
                 role={rolesMap.get(user.roleId)}
-                onEdit={editUser}
-                onDelete={deleteUser}
               />
             ))
           )}
@@ -210,67 +160,51 @@ export function UsersTab() {
           />
         </Table.Body>
       </Table.Root>
-
-      <DeleteUserDialog
-        user={dialogState.type === "DELETE" ? dialogState.user : null}
-        onConfirm={confirmDeleteUser}
-        onCancel={() => dispatchDialog({ type: "CLOSE" })}
-        isDeleting={deleteUserMutation.isPending}
-      />
-
-      <EditUserDialog
-        user={dialogState.type === "EDIT" ? dialogState.user : null}
-        onSave={updateUser}
-        onCancel={() => dispatchDialog({ type: "CLOSE" })}
-        isSaving={updateUserMutation.isPending}
-      />
-
-      <CreateUserDialog
-        isOpen={dialogState.type === "CREATE"}
-        onSave={createUser}
-        onCancel={() => dispatchDialog({ type: "CLOSE" })}
-        isSaving={createUserMutation.isPending}
-      />
     </>
   );
-}
-
-// User Actions Menu
-interface UserActionsMenuProps {
-  userId: string;
-  onEdit: (userId: string) => void;
-  onDelete: (userId: string) => void;
-}
-
-export function UserActionsMenu({
-  userId,
-  onEdit,
-  onDelete,
-}: UserActionsMenuProps) {
-  const actions = [
-    { label: "Edit User", action: () => onEdit(userId) },
-    {
-      label: "Delete User",
-      action: () => onDelete(userId),
-    },
-  ] as ActionsMenuItem[];
-  return <ActionsMenu title="User actions menu" items={actions} />;
 }
 
 // User Table Row
 interface UserTableRowProps {
   user: User;
   role: Role | undefined;
-  onEdit: (userId: string) => void;
-  onDelete: (userId: string) => void;
 }
 
-export function UserTableRow({
-  user,
-  role,
-  onEdit,
-  onDelete,
-}: UserTableRowProps) {
+export function UserTableRow({ user, role }: UserTableRowProps) {
+  const { updateUserMutation, deleteUserMutation } = useMutateUsers();
+  const { showToast } = useToast();
+
+  const updateUser = (userId: string, payload: UpdateUser) => {
+    updateUserMutation.mutate(
+      { userId, data: payload },
+      {
+        onSuccess: () => {
+          showToast(
+            "User updated",
+            `${payload.first} ${payload.last} has been updated successfully`,
+            "success",
+          );
+        },
+        onError: (error) => {
+          showToast("Failed to update user", error.message, "error");
+        },
+      },
+    );
+  };
+
+  const deleteUser = () => {
+    const userName = `${user.first} ${user.last}`;
+    deleteUserMutation.mutate(user.id, {
+      onSuccess: () => {
+        showToast(
+          "User deleted",
+          `${userName} has been deleted successfully`,
+          "success",
+        );
+      },
+    });
+  };
+
   const fullName = `${user.first} ${user.last}`;
   const joinedDate = new Date(user.createdAt).toLocaleDateString("en-US", {
     month: "short",
@@ -300,11 +234,20 @@ export function UserTableRow({
       </Table.Cell>
       <Table.Cell>
         <Flex justify="end">
-          <UserActionsMenu
-            userId={user.id}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
+          <ActionsMenu title="User actions">
+            <EditUserDialog
+              user={user}
+              onSave={updateUser}
+              isSaving={updateUserMutation.isPending}
+              onCancel={() => {}}
+            />
+            <DeleteUserDialog
+              user={user}
+              onConfirm={deleteUser}
+              isDeleting={deleteUserMutation.isPending}
+              onCancel={() => {}}
+            />
+          </ActionsMenu>
         </Flex>
       </Table.Cell>
     </Table.Row>
@@ -328,10 +271,10 @@ export function DeleteUserDialog({
   const fullName = user ? `${user.first} ${user.last}` : "";
 
   return (
-    <AlertDialog.Root
-      open={!!user}
-      onOpenChange={(open) => !open && onCancel()}
-    >
+    <AlertDialog.Root onOpenChange={(open) => !open && onCancel()}>
+      <AlertDialog.Trigger>
+        <Button variant="ghost">Delete User</Button>
+      </AlertDialog.Trigger>
       <AlertDialog.Content maxWidth="520px">
         <AlertDialog.Title>Delete user</AlertDialog.Title>
         <AlertDialog.Description>
@@ -391,7 +334,10 @@ export function EditUserDialog({
   if (!user) return null;
 
   return (
-    <Dialog.Root open={!!user} onOpenChange={(open) => !open && onCancel()}>
+    <Dialog.Root onOpenChange={(open) => !open && onCancel()}>
+      <Dialog.Trigger>
+        <Button variant="ghost">Edit User</Button>
+      </Dialog.Trigger>
       <Dialog.Content maxWidth="520px">
         <Dialog.Title>Edit user</Dialog.Title>
         <Dialog.Description size="2" mb="5" mt="-2" color="gray">
@@ -487,18 +433,11 @@ export function EditUserDialog({
 
 // Create User Dialog
 interface CreateUserDialogProps {
-  isOpen: boolean;
   onSave: (payload: CreateUser) => void;
-  onCancel: () => void;
   isSaving: boolean;
 }
 
-export function CreateUserDialog({
-  isOpen,
-  onSave,
-  onCancel,
-  isSaving,
-}: CreateUserDialogProps) {
+export function CreateUserDialog({ onSave, isSaving }: CreateUserDialogProps) {
   const [newUser, dispatch] = useReducer(createUserReducer, EMPTY_USER);
   const { roles } = useRoles();
 
@@ -509,13 +448,18 @@ export function CreateUserDialog({
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      onCancel();
       dispatch({ type: "RESET" });
     }
   };
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog.Root onOpenChange={handleOpenChange}>
+      <Dialog.Trigger>
+        <Button>
+          <PlusIcon {...ICON_SIZE} aria-hidden="true" />
+          Add User
+        </Button>
+      </Dialog.Trigger>
       <Dialog.Content maxWidth="520px">
         <Dialog.Title>Add user</Dialog.Title>
         <Dialog.Description size="2" mb="5" mt="-2" color="gray">
