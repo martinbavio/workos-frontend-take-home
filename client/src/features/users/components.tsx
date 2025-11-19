@@ -11,7 +11,7 @@ import {
 
 import type { CreateUser, UpdateUser, User } from "./types";
 import type { Role } from "../roles/types";
-import { useEffect, useReducer } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 
 import { ActionsMenu, SearchBar, TablePagination } from "../shared/components";
 import { useAppSearchParams } from "../shared/hooks";
@@ -129,6 +129,13 @@ export function UsersTab() {
     }
   };
 
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchParams({ q: value });
+    },
+    [setSearchParams],
+  );
+
   // Create a map of roles for quick lookup
   const rolesMap = new Map<string, Role>();
   roles.forEach((role) => rolesMap.set(role.id, role));
@@ -139,7 +146,7 @@ export function UsersTab() {
     <>
       <SearchBar
         value={searchParams.q}
-        onChange={(value) => setSearchParams({ q: value })}
+        onChange={handleSearchChange}
         onAdd={addUser}
         addLabel="Add user"
       />

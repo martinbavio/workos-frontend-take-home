@@ -18,8 +18,9 @@ import {
 } from "@radix-ui/react-icons";
 import { ICON_SIZE } from "./constants";
 import type { ActionsMenuItem, DialogFieldContextProps } from "./types";
-import { useId, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { DialogFieldContext, useDialogFieldContext } from "./hooks";
+import { useDebounce } from "@uidotdev/usehooks";
 
 // Search Bar
 interface SearchBarProps {
@@ -35,13 +36,20 @@ export function SearchBar({
   onAdd,
   addLabel,
 }: SearchBarProps) {
+  const [searchTerm, setSearchTerm] = useState(value);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  useEffect(() => {
+    onChange(debouncedSearchTerm);
+  }, [onChange, debouncedSearchTerm]);
+
   return (
     <Flex gap="2" mb="5">
       <Box flexGrow="1">
         <TextField.Root
           placeholder="Search..."
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
           style={{ flexGrow: 1 }}
         >
           <TextField.Slot>
