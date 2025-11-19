@@ -127,7 +127,7 @@ export function RolesTab() {
     <>
       <SearchBar
         value={searchParams.q}
-        onChange={(value) => setSearchParams({ q: value })}
+        onChange={(value) => setSearchParams({ q: value, page: null })}
         onAdd={addRole}
         addLabel="Add role"
       />

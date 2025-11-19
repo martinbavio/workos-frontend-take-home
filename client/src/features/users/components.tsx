@@ -139,7 +139,7 @@ export function UsersTab() {
     <>
       <SearchBar
         value={searchParams.q}
-        onChange={(value) => setSearchParams({ q: value })}
+        onChange={(value) => setSearchParams({ q: value, page: null })}
         onAdd={addUser}
         addLabel="Add user"
       />
