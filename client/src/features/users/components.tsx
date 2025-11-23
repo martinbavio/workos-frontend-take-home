@@ -11,7 +11,7 @@ import {
 
 import type { CreateUser, UpdateUser, User } from "./types";
 import type { Role } from "../roles/types";
-import { useEffect, useReducer } from "react";
+import React, { useCallback, useEffect, useMemo, useReducer } from "react";
 
 import { ActionsMenu, SearchBar, TablePagination } from "../shared/components";
 import { useAppSearchParams } from "../shared/hooks";
@@ -48,40 +48,49 @@ export function UsersTab() {
   const { roles, isLoading: isLoadingRoles } = useRoles();
 
   // Handlers
-  const editUser = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    if (user) {
-      dispatchDialog({ type: "OPEN_EDIT", user });
-    }
-  };
+  const editUser = useCallback(
+    (userId: string) => {
+      const user = users.find((u) => u.id === userId);
+      if (user) {
+        dispatchDialog({ type: "OPEN_EDIT", user });
+      }
+    },
+    [users],
+  );
 
-  const updateUser = (userId: string, payload: UpdateUser) => {
-    updateUserMutation.mutate(
-      { userId, data: payload },
-      {
-        onSuccess: () => {
-          dispatchDialog({ type: "CLOSE" });
-          showToast(
-            "User updated",
-            `${payload.first} ${payload.last} has been updated successfully`,
-            "success",
-          );
+  const updateUser = useCallback(
+    (userId: string, payload: UpdateUser) => {
+      updateUserMutation.mutate(
+        { userId, data: payload },
+        {
+          onSuccess: () => {
+            dispatchDialog({ type: "CLOSE" });
+            showToast(
+              "User updated",
+              `${payload.first} ${payload.last} has been updated successfully`,
+              "success",
+            );
+          },
+          onError: (error) => {
+            showToast("Failed to update user", error.message, "error");
+          },
         },
-        onError: (error) => {
-          showToast("Failed to update user", error.message, "error");
-        },
-      },
-    );
-  };
+      );
+    },
+    [updateUserMutation, showToast],
+  );
 
-  const deleteUser = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    if (user) {
-      dispatchDialog({ type: "OPEN_DELETE", user });
-    }
-  };
+  const deleteUser = useCallback(
+    (userId: string) => {
+      const user = users.find((u) => u.id === userId);
+      if (user) {
+        dispatchDialog({ type: "OPEN_DELETE", user });
+      }
+    },
+    [users],
+  );
 
-  const confirmDeleteUser = () => {
+  const confirmDeleteUser = useCallback(() => {
     if (dialogState.type === "DELETE") {
       const userName = `${dialogState.user.first} ${dialogState.user.last}`;
       deleteUserMutation.mutate(dialogState.user.id, {
@@ -95,43 +104,49 @@ export function UsersTab() {
         },
       });
     }
-  };
+  }, [dialogState, deleteUserMutation, showToast]);
 
-  const addUser = () => {
+  const addUser = useCallback(() => {
     dispatchDialog({ type: "OPEN_CREATE" });
-  };
+  }, []);
 
-  const createUser = (payload: CreateUser) => {
-    createUserMutation.mutate(payload, {
-      onSuccess: () => {
-        dispatchDialog({ type: "CLOSE" });
-        showToast(
-          "User created",
-          `${payload.first} ${payload.last} has been created successfully`,
-          "success",
-        );
-      },
-      onError: (error) => {
-        showToast("Failed to create user", error.message, "error");
-      },
-    });
-  };
+  const createUser = useCallback(
+    (payload: CreateUser) => {
+      createUserMutation.mutate(payload, {
+        onSuccess: () => {
+          dispatchDialog({ type: "CLOSE" });
+          showToast(
+            "User created",
+            `${payload.first} ${payload.last} has been created successfully`,
+            "success",
+          );
+        },
+        onError: (error) => {
+          showToast("Failed to create user", error.message, "error");
+        },
+      });
+    },
+    [createUserMutation, showToast],
+  );
 
-  const goToPreviousPage = () => {
+  const goToPreviousPage = useCallback(() => {
     if (prevPage !== null) {
       setSearchParams({ page: searchParams.page - 1 });
     }
-  };
+  }, [prevPage, searchParams.page, setSearchParams]);
 
-  const goToNextPage = () => {
+  const goToNextPage = useCallback(() => {
     if (nextPage !== null) {
       setSearchParams({ page: searchParams.page + 1 });
     }
-  };
+  }, [nextPage, searchParams.page, setSearchParams]);
 
   // Create a map of roles for quick lookup
-  const rolesMap = new Map<string, Role>();
-  roles.forEach((role) => rolesMap.set(role.id, role));
+  const rolesMap = useMemo(() => {
+    const map = new Map<string, Role>();
+    roles.forEach((role) => map.set(role.id, role));
+    return map;
+  }, [roles]);
 
   const isLoading = isLoadingUsers ?? isLoadingRoles;
 
@@ -265,7 +280,7 @@ interface UserTableRowProps {
   onDelete: (userId: string) => void;
 }
 
-export function UserTableRow({
+export const UserTableRow = React.memo(function UserTableRow({
   user,
   role,
   onEdit,
@@ -309,7 +324,7 @@ export function UserTableRow({
       </Table.Cell>
     </Table.Row>
   );
-}
+});
 
 // Delete User Dialog
 interface DeleteUserDialogProps {
