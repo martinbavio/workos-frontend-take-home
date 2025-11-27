@@ -8,6 +8,7 @@ import {
   Badge,
   Checkbox,
   TextArea,
+  DropdownMenu,
 } from "@radix-ui/themes";
 import type { CreateRole, Role, UpdateRole } from "./types";
 import { useEffect, useReducer } from "react";
@@ -21,12 +22,11 @@ import {
 } from "./reducers";
 import { useAppSearchParams } from "../shared/hooks";
 import { useMutateRoles, useRoles } from "./hooks";
-import type { ActionsMenuItem } from "../shared/types";
 import { Dialog } from "../shared/Dialog";
 import { ICON_SIZE } from "../shared/constants";
 import { useToast } from "../shared/Toast/hooks";
 import { Spinner } from "../shared/Spinner";
-import { CircleBackslashIcon } from "@radix-ui/react-icons";
+import { CircleBackslashIcon, PlusIcon } from "@radix-ui/react-icons";
 
 // Roles Tab
 export function RolesTab() {
@@ -129,7 +129,12 @@ export function RolesTab() {
         value={searchParams.q}
         onChange={(value) => setSearchParams({ q: value, page: null })}
         onAdd={addRole}
-        addLabel="Add role"
+        action={
+          <CreateRoleDialog
+            onSave={createRole}
+            isSaving={createRoleMutation.isPending}
+          />
+        }
       />
 
       <Table.Root variant="surface" style={{ tableLayout: "fixed" }}>
@@ -208,13 +213,6 @@ export function RolesTab() {
         onCancel={() => dispatchDialog({ type: "CLOSE" })}
         isSaving={updateRoleMutation.isPending}
       />
-
-      <CreateRoleDialog
-        isOpen={dialogState.type === "CREATE"}
-        onSave={createRole}
-        onCancel={() => dispatchDialog({ type: "CLOSE" })}
-        isSaving={createRoleMutation.isPending}
-      />
     </>
   );
 }
@@ -237,8 +235,17 @@ export function RoleActionsMenu({
       label: "Delete Role",
       action: () => onDelete(roleId),
     },
-  ] as ActionsMenuItem[];
-  return <ActionsMenu title="Role actions menu" items={actions} />;
+  ];
+  return (
+    <ActionsMenu
+      title="Role actions menu"
+      items={actions.map((item) => (
+        <DropdownMenu.Item key={item.label} onSelect={item.action}>
+          {item.label}
+        </DropdownMenu.Item>
+      ))}
+    />
+  );
 }
 
 // Role Table Row
@@ -472,18 +479,11 @@ export function EditRoleDialog({
 
 // Create Role Dialog
 interface CreateRoleDialogProps {
-  isOpen: boolean;
   onSave: (payload: CreateRole) => void;
-  onCancel: () => void;
   isSaving: boolean;
 }
 
-export function CreateRoleDialog({
-  isOpen,
-  onSave,
-  onCancel,
-  isSaving,
-}: CreateRoleDialogProps) {
+export function CreateRoleDialog({ onSave, isSaving }: CreateRoleDialogProps) {
   const [newRole, dispatch] = useReducer(createRoleReducer, EMPTY_ROLE);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -493,13 +493,18 @@ export function CreateRoleDialog({
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      onCancel();
       dispatch({ type: "RESET" });
     }
   };
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog.Root onOpenChange={handleOpenChange}>
+      <Dialog.Trigger>
+        <Button>
+          <PlusIcon {...ICON_SIZE} aria-hidden="true" />
+          Add Role
+        </Button>
+      </Dialog.Trigger>
       <Dialog.Content maxWidth="520px">
         <Dialog.Title>Add role</Dialog.Title>
         <Dialog.Description size="2" mb="5" mt="-2" color="gray">
